@@ -193,7 +193,7 @@ class RenderClient:
 
         return service
 
-    async def get_latest_deploy(self, service_id: str) -> Optional[Deploy]:
+    async def get_latest_deploy(self, service_id: str, repo_url: Optional[str] = None) -> Optional[Deploy]:
         """Get the most recent deployment for a service.
 
         Args:
@@ -216,7 +216,16 @@ class RenderClient:
             if not deploys or not isinstance(deploys, list) or len(deploys) == 0:
                 return None
 
-            deploy_data = deploys[0]
+            deploy_item = deploys[0]
+
+            # Extract nested deploy object (response format: {deploy: {...}, cursor: "..."})
+            deploy_data = deploy_item.get("deploy", deploy_item)
+
+            # DEBUG: Show what we got
+            import json
+            print("DEBUG: Latest deploy data:")
+            print(json.dumps(deploy_data, indent=2, default=str))
+            print()
 
             # Get deploy ID with fallback
             deploy_id = deploy_data.get("id") or deploy_data.get("deployId", "unknown")
@@ -230,15 +239,26 @@ class RenderClient:
                 commit_info = deploy_data["commit"]
                 commit_sha = commit_info.get("id") or commit_info.get("sha")
                 commit_message = commit_info.get("message")
+                print(f"DEBUG: Found commit - sha={commit_sha}, message={commit_message}")
+            else:
+                print("DEBUG: No commit field in deploy_data")
 
-            # Try to get repo URL from service or commit data
-            if "gitRepoUrl" in deploy_data:
-                repo_url = deploy_data["gitRepoUrl"]
-            elif "commit" in deploy_data and deploy_data["commit"]:
-                # Construct from commit data if available
-                commit_info = deploy_data["commit"]
-                if "gitRepoUrl" in commit_info:
-                    repo_url = commit_info["gitRepoUrl"]
+            # Use repo_url parameter if provided, otherwise try to extract from deploy data
+            if not repo_url:
+                if "gitRepoUrl" in deploy_data:
+                    repo_url = deploy_data["gitRepoUrl"]
+                    print(f"DEBUG: Found repo_url in deploy_data: {repo_url}")
+                elif "commit" in deploy_data and deploy_data["commit"]:
+                    # Construct from commit data if available
+                    commit_info = deploy_data["commit"]
+                    if "gitRepoUrl" in commit_info:
+                        repo_url = commit_info["gitRepoUrl"]
+                        print(f"DEBUG: Found repo_url in commit_info: {repo_url}")
+            else:
+                print(f"DEBUG: Using passed-in repo_url: {repo_url}")
+
+            if not repo_url:
+                print("DEBUG: No repo_url found")
 
             # Clean up GitHub URL (remove .git suffix)
             if repo_url and repo_url.endswith(".git"):
@@ -269,10 +289,36 @@ class RenderClient:
         Raises:
             RenderAPIError: On API errors
         """
-        service = await self.get_service(service_id)
+        # Fetch service data once to build service object and extract repo URL
+        data = await self._request("GET", f"/services/{service_id}")
+        service_data = data.get("service", data)
 
-        # Override status if deployment is in progress
-        latest_deploy = await self.get_latest_deploy(service_id)
+        # Extract repo URL for commit links
+        repo_url = service_data.get("repo")
+        if repo_url and repo_url.endswith(".git"):
+            repo_url = repo_url[:-4]
+
+        # Build service object (inline to avoid duplicate API call)
+        status_str = service_data.get("status", "unknown")
+        status = self._parse_service_status(status_str)
+
+        # Get custom domains
+        custom_domain = None
+        custom_domains = await self.get_custom_domains(service_id)
+        if custom_domains:
+            custom_domain = custom_domains[0]
+
+        service = Service(
+            id=service_data["id"],
+            name=service_data.get("name", service_id),
+            type=service_data.get("type", "unknown"),
+            status=status,
+            url=service_data.get("serviceDetails", {}).get("url"),
+            custom_domain=custom_domain,
+        )
+
+        # Override status if deployment is in progress, passing repo URL for commit links
+        latest_deploy = await self.get_latest_deploy(service_id, repo_url=repo_url)
         if latest_deploy and latest_deploy.is_in_progress:
             service.status = ServiceStatus.DEPLOYING
 
