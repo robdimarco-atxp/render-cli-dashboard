@@ -21,9 +21,9 @@ class ServiceCard(Container):
         background: $surface;
     }
 
-    ServiceCard.focused {
-        border: heavy $accent;
-        background: $boost;
+    ServiceCard:focus {
+        border: heavy yellow;
+        background: $panel;
     }
 
     ServiceCard > .service-header {
@@ -40,11 +40,11 @@ class ServiceCard(Container):
     ServiceCard > .service-actions {
         width: 100%;
         height: 1;
-        color: $accent;
+        color: $text-muted;
     }
 
-    ServiceCard.focused > .service-actions {
-        color: $success;
+    ServiceCard:focus > .service-actions {
+        color: yellow;
         text-style: bold;
     }
     """
@@ -87,7 +87,8 @@ class ServiceCard(Container):
 
         yield Static(
             f"{header_text}  {status_text}  [dim]{self.service.id}[/]",
-            classes="service-header"
+            classes="service-header",
+            id="header"
         )
 
         # Details line (deploy info)
@@ -140,6 +141,39 @@ class ServiceCard(Container):
         # Clear and re-compose
         self.remove_children()
         self.mount_all(self.compose())
+
+    def _update_header_display(self) -> None:
+        """Update header with selection indicator."""
+        header = self.query_one("#header", Static)
+
+        status_emoji = self.service.get_status_emoji()
+        status_colors = {
+            "available": "green",
+            "deploying": "yellow",
+            "failed": "red",
+            "suspended": "bright_black",
+            "unknown": "white"
+        }
+        status_color = status_colors.get(self.service.status.value, "white")
+        status_text = f"[{status_color}]{status_emoji} {self.service.status.value.title()}[/]"
+
+        # Add selection indicator when focused
+        if self.has_focus:
+            indicator = "[bold yellow]▶[/] "
+        else:
+            indicator = "  "
+
+        header.update(
+            f"{indicator}{self.service.name}  {status_text}  [dim]{self.service.id}[/]"
+        )
+
+    def on_focus(self) -> None:
+        """Handle focus event."""
+        self._update_header_display()
+
+    def on_blur(self) -> None:
+        """Handle blur event."""
+        self._update_header_display()
 
     async def on_key(self, event) -> None:
         """Handle key presses when focused."""
