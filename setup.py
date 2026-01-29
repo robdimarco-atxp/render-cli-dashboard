@@ -17,7 +17,6 @@ setup(
         "textual>=0.47.0",
         "httpx>=0.25.0",
         "pyyaml>=6.0",
-        "click>=8.1.0",
         "python-dateutil>=2.8.0",
     ],
     entry_points={
