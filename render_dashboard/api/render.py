@@ -209,7 +209,6 @@ class RenderClient:
         Raises:
             RenderAPIError: On API errors
         """
-        print(f"DEBUG get_latest_deploy: Called with service_id={service_id}, repo_url={repo_url}")
         try:
             data = await self._request(
                 "GET",
@@ -232,14 +231,13 @@ class RenderClient:
             # Extract commit information
             commit_sha = None
             commit_message = None
-            repo_url = None
 
             if "commit" in deploy_data and deploy_data["commit"]:
                 commit_info = deploy_data["commit"]
                 commit_sha = commit_info.get("id") or commit_info.get("sha")
                 commit_message = commit_info.get("message")
 
-            # Use repo_url parameter if provided, otherwise try to extract from deploy data
+            # Use repo_url parameter if provided (from service data), otherwise try to extract from deploy data
             if not repo_url:
                 if "gitRepoUrl" in deploy_data:
                     repo_url = deploy_data["gitRepoUrl"]
@@ -252,8 +250,6 @@ class RenderClient:
             # Clean up GitHub URL (remove .git suffix)
             if repo_url and repo_url.endswith(".git"):
                 repo_url = repo_url[:-4]
-
-            print(f"DEBUG get_latest_deploy: About to create Deploy with repo_url={repo_url}")
 
             return Deploy(
                 id=deploy_id,
@@ -286,10 +282,8 @@ class RenderClient:
 
         # Extract repo URL for commit links
         repo_url = service_data.get("repo")
-        print(f"DEBUG get_service_with_deploy: Extracted repo_url from service_data: {repo_url}")
         if repo_url and repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
-            print(f"DEBUG get_service_with_deploy: Cleaned repo_url: {repo_url}")
 
         # Build service object (inline to avoid duplicate API call)
         # Render API doesn't provide a direct "status" field, derive from suspended field

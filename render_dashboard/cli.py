@@ -116,16 +116,10 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
 
                 status_parts.append(f"Deployed: {time_ago}")
 
-                # DEBUG: Show what we have
-                print(f"DEBUG: deploy.commit_sha = {deploy.commit_sha}")
-                print(f"DEBUG: deploy.repo_url = {deploy.repo_url}")
-
                 # Add GitHub commit link if available
                 if deploy.commit_sha and deploy.repo_url:
                     commit_url = f"{deploy.repo_url}/commit/{deploy.commit_sha}"
                     status_parts.append(f"Commit: {deploy.commit_sha[:7]} - {commit_url}")
-                else:
-                    print(f"DEBUG: Skipping commit link - commit_sha or repo_url is None")
 
             return "\n".join(status_parts)
 
