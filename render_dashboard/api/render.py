@@ -18,6 +18,16 @@ class RenderClient:
 
     BASE_URL = "https://api.render.com/v1"
 
+    # Shared cache instance for service list (5 min TTL)
+    _cache: Optional[SimpleCache] = None
+
+    @classmethod
+    def _get_cache(cls) -> SimpleCache:
+        """Get or create the shared cache instance."""
+        if cls._cache is None:
+            cls._cache = SimpleCache(ttl=300)
+        return cls._cache
+
     def __init__(self, api_key: str):
         """Initialize client with API key.
 
@@ -331,7 +341,7 @@ class RenderClient:
             RenderAPIError: On API errors
         """
         # Check cache first
-        cache = SimpleCache(ttl=300)  # 5 minute cache
+        cache = self._get_cache()
         cache_key = f"services_list_{limit}"
 
         if use_cache:
