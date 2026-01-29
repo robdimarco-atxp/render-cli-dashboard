@@ -373,6 +373,15 @@ class RenderClient:
         try:
             data = await self._request("GET", "/services", params={"limit": limit})
 
+            # DEBUG: Show what we got
+            import json
+            print(f"DEBUG list_services: Response type: {type(data)}")
+            print(f"DEBUG list_services: Response keys: {data.keys() if isinstance(data, dict) else 'N/A'}")
+            if isinstance(data, list):
+                print(f"DEBUG list_services: Response is list with {len(data)} items")
+            elif isinstance(data, dict) and "services" in data:
+                print(f"DEBUG list_services: Response has 'services' key with {len(data.get('services', []))} items")
+
             # Handle different response formats
             if isinstance(data, list):
                 services_data = data
@@ -381,6 +390,8 @@ class RenderClient:
                 services_data = data.get("services", data.get("data", []))
             else:
                 services_data = []
+
+            print(f"DEBUG list_services: Extracted {len(services_data)} services from response")
 
             services = []
 
