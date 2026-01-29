@@ -174,13 +174,12 @@ class RenderClient:
 
         # Get custom domains from separate endpoint
         custom_domain = None
-        try:
-            custom_domains = await self.get_custom_domains(service_id)
-            if custom_domains:
-                custom_domain = custom_domains[0]  # Use first custom domain
-                print(f"DEBUG: Found custom domain: {custom_domain}")
-        except Exception as e:
-            print(f"DEBUG: Could not fetch custom domains: {e}")
+        print(f"DEBUG: About to call get_custom_domains for {service_id}")
+        custom_domains = await self.get_custom_domains(service_id)
+        print(f"DEBUG: get_custom_domains returned: {custom_domains}")
+        if custom_domains:
+            custom_domain = custom_domains[0]  # Use first custom domain
+            print(f"DEBUG: Using custom domain: {custom_domain}")
 
         service = Service(
             id=service_data["id"],
