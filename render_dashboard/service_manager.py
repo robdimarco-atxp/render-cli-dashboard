@@ -31,6 +31,11 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
         async with RenderClient(api_key) as client:
             all_services = await client.list_services()
 
+        if not all_services:
+            print("No services found in your Render account.")
+            print("Make sure you have services created at https://dashboard.render.com")
+            return 1
+
         # Filter services matching search term
         search_lower = search_term.lower()
         matches = [
@@ -119,7 +124,11 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
         print(f"API error: {e}")
         return 1
     except Exception as e:
+        import traceback
         print(f"Unexpected error: {e}")
+        print()
+        print("Debug information:")
+        traceback.print_exc()
         return 1
 
 

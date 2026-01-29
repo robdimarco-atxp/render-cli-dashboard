@@ -212,13 +212,31 @@ class RenderClient:
         try:
             data = await self._request("GET", "/services", params={"limit": limit})
 
-            services_data = data if isinstance(data, list) else data.get("services", [])
+            # Handle different response formats
+            if isinstance(data, list):
+                services_data = data
+            elif isinstance(data, dict):
+                # Response might be wrapped in different ways
+                services_data = data.get("services", data.get("data", []))
+            else:
+                services_data = []
+
             services = []
 
             for service_data in services_data:
+                # Skip if not a dict
+                if not isinstance(service_data, dict):
+                    continue
+
+                # Get required fields with fallbacks
+                service_id = service_data.get("id") or service_data.get("serviceId")
+                if not service_id:
+                    # Skip services without IDs
+                    continue
+
                 service = Service(
-                    id=service_data["id"],
-                    name=service_data.get("name", service_data["id"]),
+                    id=service_id,
+                    name=service_data.get("name", service_id),
                     type=service_data.get("type", "unknown"),
                     status=self._parse_service_status(service_data.get("status", "unknown")),
                     url=service_data.get("serviceDetails", {}).get("url"),
@@ -228,3 +246,5 @@ class RenderClient:
             return services
         except RenderAPIError as e:
             raise e
+        except Exception as e:
+            raise RenderAPIError(f"Error parsing service list: {e}")
