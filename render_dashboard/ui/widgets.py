@@ -144,7 +144,12 @@ class ServiceCard(Container):
 
     def _update_header_display(self) -> None:
         """Update header with selection indicator."""
-        header = self.query_one("#header", Static)
+        # Check if widget is mounted and has children
+        try:
+            header = self.query_one("#header", Static)
+        except Exception:
+            # Widget not ready yet, skip update
+            return
 
         status_emoji = self.service.get_status_emoji()
         status_colors = {
@@ -166,6 +171,11 @@ class ServiceCard(Container):
         header.update(
             f"{indicator}{self.service.name}  {status_text}  [dim]{self.service.id}[/]"
         )
+
+    def on_mount(self) -> None:
+        """Called when widget is mounted."""
+        # Initial display update
+        self._update_header_display()
 
     def on_focus(self) -> None:
         """Handle focus event."""
