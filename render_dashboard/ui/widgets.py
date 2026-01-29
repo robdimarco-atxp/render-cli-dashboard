@@ -98,7 +98,7 @@ class ServiceCard(Container):
 
         # Actions (highlight action keys without brackets to avoid markup issues)
         yield Static(
-            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]D[/]eploys | [bold cyan]S[/]ettings",
+            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]M[/]etrics | [bold cyan]S[/]ettings",
             classes="service-actions"
         )
 
@@ -138,13 +138,25 @@ class ServiceCard(Container):
             service: Updated service data
         """
         self.service = service
-        # Clear and re-compose
-        self.remove_children()
-        self.mount_all(self.compose())
+        # Update existing widgets instead of recreating
+        self._update_header_display()
+
+        # Update details if they exist
+        try:
+            details = self.query_one(".service-details", Static)
+            details.update(self._format_details())
+        except Exception:
+            # Details widget doesn't exist, skip
+            pass
 
     def _update_header_display(self) -> None:
         """Update header with selection indicator."""
-        header = self.query_one("#header", Static)
+        # Check if widget is mounted and has children
+        try:
+            header = self.query_one("#header", Static)
+        except Exception:
+            # Widget not ready yet, skip update
+            return
 
         status_emoji = self.service.get_status_emoji()
         status_colors = {
@@ -167,6 +179,11 @@ class ServiceCard(Container):
             f"{indicator}{self.service.name}  {status_text}  [dim]{self.service.id}[/]"
         )
 
+    def on_mount(self) -> None:
+        """Called when widget is mounted."""
+        # Initial display update
+        self._update_header_display()
+
     def on_focus(self) -> None:
         """Handle focus event."""
         self._update_header_display()
@@ -182,7 +199,7 @@ class ServiceCard(Container):
         action_map = {
             "l": "logs",
             "e": "events",
-            "d": "deploys",
+            "m": "metrics",
             "s": "settings",
         }
 
@@ -227,11 +244,15 @@ class StatusBar(Static):
             else:
                 time_str = f"{seconds_ago // 60}m ago"
 
-            text = f"Updated: {time_str}"
+            # Show brief "refreshing..." indicator for 2 seconds after update
+            if seconds_ago < 2:
+                text = f"[bold green]✓ Refreshed[/] {time_str}"
+            else:
+                text = f"Updated: {time_str}"
         else:
             text = "Loading..."
 
-        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: enabled"
+        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: 30s"
         # Pad to full width
         self.update(f" {text}  |  {controls}")
 
