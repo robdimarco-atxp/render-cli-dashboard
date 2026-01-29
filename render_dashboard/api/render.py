@@ -131,17 +131,24 @@ class RenderClient:
 
             domains = []
             if isinstance(data, list):
-                for domain_obj in data:
-                    if isinstance(domain_obj, dict):
-                        domain_name = domain_obj.get("name") or domain_obj.get("domain")
-                        if domain_name:
-                            domains.append(domain_name)
+                # Response is array of {customDomain: {...}, cursor: "..."} objects
+                for item in data:
+                    if isinstance(item, dict):
+                        # Extract the nested customDomain object
+                        domain_obj = item.get("customDomain", item)
+                        if isinstance(domain_obj, dict):
+                            domain_name = domain_obj.get("name")
+                            if domain_name:
+                                domains.append(domain_name)
             elif isinstance(data, dict) and "customDomains" in data:
-                for domain_obj in data["customDomains"]:
-                    if isinstance(domain_obj, dict):
-                        domain_name = domain_obj.get("name") or domain_obj.get("domain")
-                        if domain_name:
-                            domains.append(domain_name)
+                # Handle wrapped response format
+                for item in data["customDomains"]:
+                    if isinstance(item, dict):
+                        domain_obj = item.get("customDomain", item)
+                        if isinstance(domain_obj, dict):
+                            domain_name = domain_obj.get("name")
+                            if domain_name:
+                                domains.append(domain_name)
 
             print(f"DEBUG: Parsed domains: {domains}")
             return domains
