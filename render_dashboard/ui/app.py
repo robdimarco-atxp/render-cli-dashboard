@@ -24,6 +24,7 @@ class DashboardApp(App):
 
     #services-container {
         height: 1fr;
+        width: 100%;
         padding: 1;
     }
 
@@ -50,8 +51,14 @@ class DashboardApp(App):
     }
 
     .loading-message {
-        color: yellow;
-        padding: 1;
+        width: 100%;
+        height: auto;
+        padding: 4;
+        margin: 2;
+        text-align: center;
+        text-style: bold;
+        border: heavy yellow;
+        background: $panel;
     }
     """
 
@@ -79,17 +86,24 @@ class DashboardApp(App):
         self.config: Optional[AppConfig] = None
         self.service_cards: dict[str, ServiceCard] = {}
         self.refresh_task: Optional[asyncio.Task] = None
+        self.loading_animation_state: bool = False
 
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
         yield Header()
-        yield Input(placeholder="Search services...", id="search-input")
+        search_input = Input(placeholder="Search services...", id="search-input")
+        search_input.can_focus = False  # Not focusable until search is activated
+        yield search_input
         yield VerticalScroll(id="services-container")
         yield StatusBar()
         yield Footer()
 
     async def on_mount(self) -> None:
         """Initialize the dashboard when mounted."""
+        # Show loading in status bar
+        status_bar = self.query_one(StatusBar)
+        status_bar.set_loading(True)
+
         try:
             # Load configuration
             self.config = load_config(self.config_path)
@@ -97,12 +111,19 @@ class DashboardApp(App):
             # Initial service load
             await self.refresh_services()
 
+            # Focus first service after loading
+            if self.service_cards:
+                first_card = next(iter(self.service_cards.values()))
+                first_card.focus()
+
             # Start auto-refresh task
             self.refresh_task = asyncio.create_task(self._auto_refresh_loop())
 
         except ConfigError as e:
+            status_bar.set_loading(False)
             self._show_error(f"Configuration error: {e}")
         except Exception as e:
+            status_bar.set_loading(False)
             self._show_error(f"Unexpected error: {e}")
 
     async def on_unmount(self) -> None:
@@ -120,10 +141,30 @@ class DashboardApp(App):
         container.mount(Static(message, classes="error-message"))
 
     def _show_loading(self) -> None:
-        """Show loading message."""
+        """Show loading message with animation."""
         container = self.query_one("#services-container")
         container.remove_children()
-        container.mount(Static("Loading services...", classes="loading-message"))
+        loading_widget = Static("[bold yellow]⟳ Loading services...[/]", classes="loading-message", id="loading-message")
+        container.mount(loading_widget)
+        # Start loading animation
+        self.loading_animation_state = False
+        self.set_interval(0.15, self._update_loading_animation, name="loading_animation")
+
+    def _update_loading_animation(self) -> None:
+        """Update loading animation."""
+        try:
+            widget = self.query_one("#loading-message", Static)
+            if self.loading_animation_state:
+                widget.update("[bold yellow]⟳ Loading services...[/]")
+            else:
+                widget.update("[bold yellow]⟲ Loading services...[/]")
+            self.loading_animation_state = not self.loading_animation_state
+        except Exception:
+            # Widget no longer exists, stop animation
+            try:
+                self.remove_timer("loading_animation")
+            except Exception:
+                pass
 
     async def refresh_services(self) -> None:
         """Fetch and update all services."""
@@ -139,8 +180,21 @@ class DashboardApp(App):
                 ]
                 services = await asyncio.gather(*tasks, return_exceptions=True)
 
+                # Stop loading animation if running
+                try:
+                    self.remove_timer("loading_animation")
+                except Exception:
+                    pass
+
                 # Update UI with results
                 container = self.query_one("#services-container")
+
+                # Clear loading message if it exists
+                try:
+                    loading_msg = container.query_one("#loading-message")
+                    loading_msg.remove()
+                except Exception:
+                    pass
 
                 for service_config, service_result in zip(self.config.services, services):
                     if isinstance(service_result, Exception):
@@ -258,6 +312,7 @@ class DashboardApp(App):
             card.styles.display = "block"
 
         search_input.add_class("visible")
+        search_input.can_focus = True
         search_input.focus()
 
     def action_cancel_search(self) -> None:
@@ -269,6 +324,7 @@ class DashboardApp(App):
             return
 
         search_input.remove_class("visible")
+        search_input.can_focus = False
         search_input.value = ""
 
         # Show all services
@@ -308,6 +364,7 @@ class DashboardApp(App):
 
         search_input = self.query_one("#search-input", Input)
         search_input.remove_class("visible")
+        search_input.can_focus = False
 
         # Focus first visible service
         for card in self.service_cards.values():

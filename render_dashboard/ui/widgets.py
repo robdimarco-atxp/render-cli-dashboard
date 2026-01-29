@@ -126,10 +126,24 @@ class ServiceCard(Container):
         else:
             time_ago = f"{delta.seconds}s ago"
 
+        # Build details string with commit hash if available
         if deploy.is_in_progress:
-            return f"└─ Deploy started: {time_ago}"
+            details = f"└─ Deploy started: {time_ago}"
         else:
-            return f"└─ Last deploy: {time_ago} ({deploy.status.value})"
+            details = f"└─ Last deploy: {time_ago} ({deploy.status.value})"
+
+        # Add commit hash on a second line if available
+        if deploy.commit_sha:
+            short_sha = deploy.commit_sha[:7]
+            details += f"\n   Commit: [cyan]{short_sha}[/]"
+            if deploy.commit_message:
+                # Truncate long commit messages
+                msg = deploy.commit_message.split('\n')[0]  # First line only
+                if len(msg) > 60:
+                    msg = msg[:57] + "..."
+                details += f" - {msg}"
+
+        return details
 
     def update_service(self, service: Service) -> None:
         """Update the service data and refresh display.
@@ -226,15 +240,24 @@ class StatusBar(Static):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__("", *args, **kwargs)
         self.last_update: Optional[datetime] = None
+        self.is_loading: bool = False
+
+    def set_loading(self, loading: bool) -> None:
+        """Set loading state."""
+        self.is_loading = loading
+        self._refresh_text()
 
     def update_time(self) -> None:
         """Update the last update timestamp."""
         self.last_update = datetime.now()
+        self.is_loading = False
         self._refresh_text()
 
     def _refresh_text(self) -> None:
         """Refresh the status bar text."""
-        if self.last_update:
+        if self.is_loading:
+            text = "[bold yellow]⟳ Loading...[/]"
+        elif self.last_update:
             now = datetime.now()
             delta = now - self.last_update
             seconds_ago = int(delta.total_seconds())
