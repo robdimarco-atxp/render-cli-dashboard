@@ -166,13 +166,17 @@ class RenderClient:
                 return None
 
             deploy_data = deploys[0]
+
+            # Get deploy ID with fallback
+            deploy_id = deploy_data.get("id") or deploy_data.get("deployId", "unknown")
+
             return Deploy(
-                id=deploy_data["id"],
+                id=deploy_id,
                 status=self._parse_deploy_status(deploy_data.get("status", "created")),
                 created_at=self._parse_datetime(deploy_data.get("createdAt")) or datetime.now(),
                 finished_at=self._parse_datetime(deploy_data.get("finishedAt")),
             )
-        except RenderAPIError:
+        except (RenderAPIError, KeyError, IndexError, TypeError):
             # If we can't get deploys, just return None rather than failing
             return None
 
