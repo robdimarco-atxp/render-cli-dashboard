@@ -71,11 +71,12 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
             status_parts.append(f"Status: {service.status.value}")
             status_parts.append(f"Type: {service.type}")
 
-            # Show both custom domain and render URL
+            # Show custom domain (primary URL)
             if service.custom_domain:
-                status_parts.append(f"Custom Domain: https://{service.custom_domain}")
-            if service.url:
-                status_parts.append(f"Render URL: {service.url}")
+                status_parts.append(f"URL: https://{service.custom_domain}")
+            elif service.url:
+                # Fallback to Render URL if no custom domain
+                status_parts.append(f"URL: {service.url}")
 
             if service.latest_deploy:
                 deploy = service.latest_deploy
@@ -115,10 +116,16 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
 
                 status_parts.append(f"Deployed: {time_ago}")
 
+                # DEBUG: Show what we have
+                print(f"DEBUG: deploy.commit_sha = {deploy.commit_sha}")
+                print(f"DEBUG: deploy.repo_url = {deploy.repo_url}")
+
                 # Add GitHub commit link if available
                 if deploy.commit_sha and deploy.repo_url:
                     commit_url = f"{deploy.repo_url}/commit/{deploy.commit_sha}"
                     status_parts.append(f"Commit: {deploy.commit_sha[:7]} - {commit_url}")
+                else:
+                    print(f"DEBUG: Skipping commit link - commit_sha or repo_url is None")
 
             return "\n".join(status_parts)
 
