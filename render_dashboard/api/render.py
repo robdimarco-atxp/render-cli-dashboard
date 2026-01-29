@@ -398,11 +398,14 @@ class RenderClient:
 
             services = []
 
-            for idx, service_data in enumerate(services_data):
+            for idx, item in enumerate(services_data):
                 # Skip if not a dict
-                if not isinstance(service_data, dict):
+                if not isinstance(item, dict):
                     print(f"DEBUG list_services: Item {idx} is not a dict, skipping")
                     continue
+
+                # Extract nested service object (response format: {service: {...}, cursor: "..."})
+                service_data = item.get("service", item)
 
                 # Get required fields with fallbacks
                 service_id = service_data.get("id") or service_data.get("serviceId")
