@@ -5,7 +5,7 @@ from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
-from textual.widgets import Header, Footer, Static
+from textual.widgets import Header, Footer, Static, Input
 from textual.binding import Binding
 
 from ..config import AppConfig, load_config, ConfigError
@@ -27,6 +27,14 @@ class DashboardApp(App):
         padding: 1;
     }
 
+    #search-input {
+        height: 3;
+        margin: 0 1;
+        padding: 0 1;
+        border: solid $primary;
+        background: $panel;
+    }
+
     .error-message {
         color: red;
         padding: 1;
@@ -41,9 +49,11 @@ class DashboardApp(App):
     BINDINGS = [
         Binding("r", "refresh", "Refresh", show=True),
         Binding("q", "quit", "Quit", show=True),
+        Binding("/", "search", "Search", show=True, priority=True),
+        Binding("escape", "cancel_search", "Cancel", show=False, priority=True),
         ("l", "action_logs", "Logs"),
         ("e", "action_events", "Events"),
-        ("d", "action_deploys", "Deploys"),
+        ("m", "action_metrics", "Metrics"),
         ("s", "action_settings", "Settings"),
     ]
 
@@ -64,6 +74,7 @@ class DashboardApp(App):
     def compose(self) -> ComposeResult:
         """Compose the UI layout."""
         yield Header()
+        yield Input(placeholder="Search services...", id="search-input")
         yield VerticalScroll(id="services-container")
         yield StatusBar()
         yield Footer()
@@ -125,6 +136,13 @@ class DashboardApp(App):
                 for service_config, service_result in zip(self.config.services, services):
                     if isinstance(service_result, Exception):
                         # Handle error for this specific service
+                        # Remove the card if it exists (to avoid showing stale/empty data)
+                        if service_config.id in self.service_cards:
+                            card = self.service_cards[service_config.id]
+                            card.remove()
+                            del self.service_cards[service_config.id]
+                        # Log the error (optional: could show error in UI instead)
+                        self.log.error(f"Failed to load service {service_config.name}: {service_result}")
                         continue
 
                     service: Service = service_result
@@ -206,17 +224,70 @@ class DashboardApp(App):
         if service_id:
             self._open_service_url(service_id, "events")
 
-    def action_action_deploys(self) -> None:
-        """Open deploys for focused service."""
+    def action_action_metrics(self) -> None:
+        """Open metrics for focused service."""
         service_id = self._get_focused_service_id()
         if service_id:
-            self._open_service_url(service_id, "deploys")
+            self._open_service_url(service_id, "metrics")
 
     def action_action_settings(self) -> None:
         """Open settings for focused service."""
         service_id = self._get_focused_service_id()
         if service_id:
             self._open_service_url(service_id, "settings")
+
+    async def action_search(self) -> None:
+        """Focus the search input."""
+        search_input = self.query_one("#search-input", Input)
+        search_input.focus()
+
+    def action_cancel_search(self) -> None:
+        """Clear search and focus first service."""
+        search_input = self.query_one("#search-input", Input)
+        search_input.value = ""
+        # Show all services
+        for card in self.service_cards.values():
+            card.styles.display = "block"
+        # Focus first service card
+        if self.service_cards:
+            first_card = next(iter(self.service_cards.values()))
+            first_card.focus()
+
+    async def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle search input changes."""
+        if event.input.id != "search-input":
+            return
+
+        if not self.service_cards:
+            return  # No services to filter
+
+        query = event.value.lower().strip()
+
+        # If empty query, show all services
+        if not query:
+            for card in self.service_cards.values():
+                card.styles.display = "block"
+            return
+
+        # Filter services by name
+        for card in self.service_cards.values():
+            matches = query in card.service.name.lower()
+            card.styles.display = "block" if matches else "none"
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle search input submission (Enter key)."""
+        if event.input.id != "search-input":
+            return
+
+        search_input = self.query_one("#search-input", Input)
+        search_input.remove_class("visible")
+
+        # Focus first visible service
+        for card in self.service_cards.values():
+            if card.styles.display == "block":
+                card.focus()
+                break
+
 
 
 def run_dashboard(config_path: Optional[str] = None) -> int:

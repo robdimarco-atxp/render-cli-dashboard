@@ -19,7 +19,7 @@ def get_service_url(service_id: str, action: str) -> str:
 
     Args:
         service_id: Render service ID
-        action: Action name (logs, events, settings, deploy)
+        action: Action name (logs, events, settings, metrics)
 
     Returns:
         Full URL to Render dashboard
@@ -30,8 +30,8 @@ def get_service_url(service_id: str, action: str) -> str:
         return f"{base_url}/logs"
     elif action == "events":
         return f"{base_url}/events"
-    elif action == "deploys":
-        return f"{base_url}/deploys"
+    elif action == "metrics":
+        return f"{base_url}/metrics"
     elif action == "settings":
         return base_url
     else:
@@ -142,7 +142,7 @@ def handle_cli_command(args: list[str]) -> int:
         print("Actions:")
         print("  logs      - Open service logs in browser")
         print("  events    - Open service events in browser")
-        print("  deploys   - Open service deploys in browser")
+        print("  metrics   - Open service metrics in browser")
         print("  settings  - Open service settings in browser")
         print("  status    - Show current service status")
         print("")
@@ -156,7 +156,7 @@ def handle_cli_command(args: list[str]) -> int:
     action = args[1].lower()
 
     # Validate action
-    valid_actions = ["logs", "events", "deploys", "settings", "status"]
+    valid_actions = ["logs", "events", "metrics", "settings", "status"]
     if action not in valid_actions:
         print(f"Invalid action: {action}")
         print(f"Valid actions: {', '.join(valid_actions)}")

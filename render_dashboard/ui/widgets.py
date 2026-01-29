@@ -98,7 +98,7 @@ class ServiceCard(Container):
 
         # Actions (highlight action keys without brackets to avoid markup issues)
         yield Static(
-            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]D[/]eploys | [bold cyan]S[/]ettings",
+            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]M[/]etrics | [bold cyan]S[/]ettings",
             classes="service-actions"
         )
 
@@ -192,7 +192,7 @@ class ServiceCard(Container):
         action_map = {
             "l": "logs",
             "e": "events",
-            "d": "deploys",
+            "m": "metrics",
             "s": "settings",
         }
 
