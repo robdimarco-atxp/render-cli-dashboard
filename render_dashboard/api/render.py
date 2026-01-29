@@ -201,6 +201,7 @@ class RenderClient:
 
         Args:
             service_id: Render service ID
+            repo_url: Optional repository URL for constructing commit links
 
         Returns:
             Deploy object or None if no deploys found
@@ -208,6 +209,7 @@ class RenderClient:
         Raises:
             RenderAPIError: On API errors
         """
+        print(f"DEBUG get_latest_deploy: Called with service_id={service_id}, repo_url={repo_url}")
         try:
             data = await self._request(
                 "GET",
@@ -251,6 +253,8 @@ class RenderClient:
             if repo_url and repo_url.endswith(".git"):
                 repo_url = repo_url[:-4]
 
+            print(f"DEBUG get_latest_deploy: About to create Deploy with repo_url={repo_url}")
+
             return Deploy(
                 id=deploy_id,
                 status=self._parse_deploy_status(deploy_data.get("status", "created")),
@@ -282,8 +286,10 @@ class RenderClient:
 
         # Extract repo URL for commit links
         repo_url = service_data.get("repo")
+        print(f"DEBUG get_service_with_deploy: Extracted repo_url from service_data: {repo_url}")
         if repo_url and repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
+            print(f"DEBUG get_service_with_deploy: Cleaned repo_url: {repo_url}")
 
         # Build service object (inline to avoid duplicate API call)
         # Render API doesn't provide a direct "status" field, derive from suspended field
