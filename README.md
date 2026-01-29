@@ -34,7 +34,9 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-This creates the `rd` command in your PATH (within the virtual environment).
+This creates the `rdash` command in your PATH (within the virtual environment).
+
+**Note:** The command is `rdash` (not `rd`) to avoid conflicts with common shell aliases like `rd` → `rmdir`. No manual PATH setup is needed - the command is automatically available when the venv is activated. See [PATH_SETUP.md](PATH_SETUP.md) for details on making it permanently available.
 
 ### 2. Get Your Render API Key
 
@@ -57,7 +59,7 @@ Use the interactive service manager to discover and add services:
 
 ```bash
 # Search for a service and add it
-rd service add chat
+rdash service add chat
 
 # It will:
 # 1. Search your Render account for services matching "chat"
@@ -98,32 +100,32 @@ services:
 
 ```bash
 # Add a service interactively
-rd service add <name>
+rdash service add <name>
 
 # List configured services
-rd service list
+rdash service list
 
 # Remove a service
-rd service remove <alias>
+rdash service remove <alias>
 ```
 
 **Examples:**
 ```bash
 # Search and add a service named "chat"
-rd service add chat
+rdash service add chat
 # Prompts for aliases, automatically adds to config
 
 # List all configured services
-rd service list
+rdash service list
 
 # Remove a service by alias
-rd service remove chat
+rdash service remove chat
 ```
 
 ### TUI Dashboard Mode (Interactive)
 
 ```bash
-rd
+rdash
 ```
 
 **Keyboard shortcuts:**
@@ -252,7 +254,7 @@ _rd_completion() {
         commands=("${(@f)$(cat "$cache_file")}")
     fi
 
-    _describe 'rd commands' commands
+    _describe 'rdash commands' commands
 }
 
 # Register completion
@@ -357,8 +359,8 @@ services:
 4. **Set up shell aliases** for frequently accessed services:
    ```bash
    # In ~/.zshrc or ~/.bashrc
-   alias chat-logs='rd chat logs'
-   alias auth-logs='rd auth logs'
+   alias chat-logs='rdash chat logs'
+   alias auth-logs='rdash auth logs'
    ```
 
 ## Troubleshooting
@@ -369,7 +371,7 @@ services:
 
 ### "No service found matching..."
 - Check your `config.yaml` service IDs and aliases
-- Run `rd` (TUI mode) to see which services are configured
+- Run `rdash` (TUI mode) to see which services are configured
 - Verify service IDs at https://dashboard.render.com
 
 ### "Config file not found"
@@ -400,7 +402,7 @@ render-dashboard/
 
 **Key design decisions:**
 - **Textual framework**: Native async support perfect for API polling
-- **Dual entry point**: Single `rd` command routes to CLI or TUI
+- **Dual entry point**: Single `rdash` command routes to CLI or TUI
 - **Async HTTP**: httpx for efficient concurrent API calls
 - **Smart caching**: Service data cached between refreshes
 

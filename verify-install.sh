@@ -45,12 +45,12 @@ else
     exit 1
 fi
 
-# Check if rd command exists
-echo "4. Checking if 'rd' command exists..."
-if command -v rd &> /dev/null; then
-    echo "   ✓ 'rd' command is available in PATH"
+# Check if rdash command exists
+echo "4. Checking if 'rdash' command exists..."
+if command -v rdash &> /dev/null; then
+    echo "   ✓ 'rdash' command is available in PATH"
 else
-    echo "   ✗ 'rd' command not found"
+    echo "   ✗ 'rdash' command not found"
     echo "     Run: pip install -e ."
     exit 1
 fi
@@ -117,13 +117,14 @@ echo ""
 echo "Next steps:"
 echo "  1. Activate venv: source .venv/bin/activate"
 echo "  2. Set RENDER_API_KEY: export RENDER_API_KEY=rnd_xxxxx"
-echo "  3. Create config.yaml: cp config.yaml.example config.yaml"
-echo "  4. Edit config.yaml with your service IDs"
-echo "  5. Run dashboard: rd"
-echo "  6. Try CLI: rd <service> logs"
+echo "  3. Add services: rdash service add <name>"
+echo "  4. Run dashboard: rdash"
+echo "  5. Try CLI: rdash <service> logs"
 echo ""
 echo "Documentation:"
 echo "  • Quick start: cat QUICKSTART.md"
 echo "  • Full guide: cat README.md"
 echo "  • Testing: cat TESTING.md"
+echo ""
+echo "Note: The command is 'rdash' (not 'rd' which conflicts with rmdir)"
 echo ""

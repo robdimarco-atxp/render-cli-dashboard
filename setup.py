@@ -22,7 +22,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "rd=render_dashboard.__main__:main",
+            "rdash=render_dashboard.__main__:main",
         ],
     },
     classifiers=[

@@ -38,7 +38,7 @@ Use the interactive service manager to discover and add services:
 
 ```bash
 # Search for your service (e.g., "api", "chat", "web")
-rd service add api
+rdash service add api
 
 # Follow the prompts:
 # 1. Select service if multiple matches
@@ -50,13 +50,13 @@ The service is automatically added to `config.yaml` - no manual editing needed!
 
 **Add more services:**
 ```bash
-rd service add chat
-rd service add auth
+rdash service add chat
+rdash service add auth
 ```
 
 **View configured services:**
 ```bash
-rd service list
+rdash service list
 ```
 
 ## Step 4: Try It!
@@ -68,7 +68,7 @@ source .venv/bin/activate
 
 **TUI Dashboard:**
 ```bash
-rd
+rdash
 ```
 
 **CLI Commands:**
@@ -81,7 +81,7 @@ rd api status    # Shows status in terminal
 
 ```bash
 # View all services (TUI)
-rd
+rdash
 
 # Quick status check
 rd api status
@@ -102,14 +102,14 @@ rd unknown logs  # Shows list of configured services
    ```bash
    source /path/to/render-dashboard/.venv/bin/activate
    ```
-2. **Keep it running**: Run `rd` in a tmux pane for monitoring
-3. **Use aliases**: Set up `alias api-logs='rd api logs'` in your shell
+2. **Keep it running**: Run `rdash` in a tmux pane for monitoring
+3. **Use aliases**: Set up `alias api-logs='rdash api logs'` in your shell
 4. **Quick access**: Type `rd ` and let zsh-autosuggestions do the rest
 
 ## Need Help?
 
 - Check `README.md` for full documentation
-- Issues? Run `rd api status` to verify connection
+- Issues? Run `rdash api status` to verify connection
 - Config problems? The error messages tell you exactly what's wrong
 
 ---

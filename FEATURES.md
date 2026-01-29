@@ -4,7 +4,7 @@
 
 ### 1. Dual Operating Modes
 
-#### TUI Dashboard Mode (`rd`)
+#### TUI Dashboard Mode (`rdash`)
 - **Visual monitoring** - See all services at a glance
 - **Real-time status** - Auto-refreshes every 30 seconds
 - **Color-coded indicators** - Quick status identification
@@ -186,7 +186,7 @@
 ### Easy Installation
 - Standard Python package with setup.py
 - Install with `pip install -e .`
-- Creates `rd` command in PATH
+- Creates `rdash` command in PATH
 - No additional setup required
 
 ### Configuration
@@ -209,7 +209,7 @@
 - Quick keyboard shortcuts for common actions
 
 ### Quick Actions
-- `rd api logs` - Instant access to logs
+- `rdash api logs` - Instant access to logs
 - `rd db status` - Check database status
 - `rd web events` - View recent events
 - No need to open browser and navigate

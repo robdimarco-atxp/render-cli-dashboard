@@ -25,7 +25,7 @@ Expected output: `0.1.0`
 ```bash
 # Try without config (should show helpful error)
 cd /tmp
-rd
+rdash
 
 # Expected: "No config.yaml found. Please create one..."
 ```
@@ -46,7 +46,7 @@ services:
 
 ```bash
 cd /tmp
-rd
+rdash
 # Expected: "Missing render.api_key in config"
 ```
 
@@ -120,7 +120,7 @@ rd chat settings  # https://dashboard.render.com/web/srv-xxx
 ### Test 9: Launch TUI
 
 ```bash
-rd
+rdash
 # Expected: Textual TUI launches with header, service cards, status bar, footer
 ```
 
@@ -228,14 +228,14 @@ rd yourservice status
 ```bash
 # Config in current directory takes precedence
 cd render-dashboard
-rd
+rdash
 # Should use ./config.yaml
 
 # Config in home directory
 mkdir -p ~/.config/render-dashboard
 cp config.yaml ~/.config/render-dashboard/
 cd /tmp
-rd
+rdash
 # Should use ~/.config/render-dashboard/config.yaml
 ```
 
@@ -249,7 +249,7 @@ services: []
 ```
 
 ```bash
-rd
+rdash
 # Expected: "No services configured. Add at least one service to 'services' list"
 ```
 
@@ -272,7 +272,7 @@ rd  # TUI mode
 With 5+ services configured:
 
 ```bash
-rd
+rdash
 # Expected: TUI loads in < 2 seconds
 # All services should appear
 ```

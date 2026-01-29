@@ -7,10 +7,10 @@
 # 3. Reload: source ~/.zshrc
 
 # Cache file location
-_RD_CACHE_FILE="${HOME}/.cache/render-dashboard/completions"
+_RDASH_CACHE_FILE="${HOME}/.cache/render-dashboard/completions"
 
 # Generate completions from config.yaml
-_rd_generate_completions() {
+_rdash_generate_completions() {
     # Look for config in standard locations
     local config_file=""
     if [[ -f "${HOME}/.config/render-dashboard/config.yaml" ]]; then
@@ -34,20 +34,20 @@ _rd_generate_completions() {
     local actions=(logs events deploys settings status)
 
     # Create cache directory
-    mkdir -p "$(dirname "$_RD_CACHE_FILE")"
+    mkdir -p "$(dirname "$_RDASH_CACHE_FILE")"
 
     # Write completions to cache
     {
         for alias in $aliases; do
             for action in $actions; do
-                echo "rd ${alias} ${action}"
+                echo "rdash ${alias} ${action}"
             done
         done
-    } > "$_RD_CACHE_FILE"
+    } > "$_RDASH_CACHE_FILE"
 }
 
 # Completion function
-_rd_completion() {
+_rdash_completion() {
     local -a commands
     local state
 
@@ -59,8 +59,8 @@ _rd_completion() {
         config_file="./config.yaml"
     fi
 
-    if [[ -n "$config_file" ]] && { [[ ! -f "$_RD_CACHE_FILE" ]] || [[ "$config_file" -nt "$_RD_CACHE_FILE" ]]; }; then
-        _rd_generate_completions
+    if [[ -n "$config_file" ]] && { [[ ! -f "$_RDASH_CACHE_FILE" ]] || [[ "$config_file" -nt "$_RDASH_CACHE_FILE" ]]; }; then
+        _rdash_generate_completions
     fi
 
     # Define completion spec
@@ -72,9 +72,9 @@ _rd_completion() {
     case $state in
         services)
             # Extract unique service aliases from cache
-            if [[ -f "$_RD_CACHE_FILE" ]]; then
+            if [[ -f "$_RDASH_CACHE_FILE" ]]; then
                 local -a services
-                services=($(awk '{print $2}' "$_RD_CACHE_FILE" | sort -u))
+                services=($(awk '{print $2}' "$_RDASH_CACHE_FILE" | sort -u))
                 _describe 'service' services
             fi
             ;;
@@ -93,12 +93,11 @@ _rd_completion() {
 }
 
 # Register completion
-compdef _rd_completion rd
+compdef _rdash_completion rdash
 
 # Generate initial completions on plugin load
-_rd_generate_completions 2>/dev/null
+_rdash_generate_completions 2>/dev/null
 
 # Helpful aliases (optional - can be commented out if not wanted)
-# Uncomment these if you want quick aliases to launch the dashboard
-# alias rdd='rd'  # Quick launch dashboard
-# alias rdl='rd'  # Alternative quick launch
+# Uncomment these if you want quick aliases
+# alias rd='rdash'  # If you want to use 'rd' as shorthand

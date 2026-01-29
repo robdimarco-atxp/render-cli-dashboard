@@ -150,7 +150,7 @@ render-dashboard/
 ### 2. Architecture Decisions
 
 **Dual Entry Point**
-- Single `rd` command for both modes
+- Single `rdash` command for both modes
 - Argument detection routes appropriately
 - Shared config and API client (DRY)
 - Consistent user experience

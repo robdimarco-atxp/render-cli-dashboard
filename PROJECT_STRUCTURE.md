@@ -141,7 +141,7 @@ Return to caller (TUI or CLI)
 - Multiple services fetched concurrently for fast TUI load
 
 ### 2. Dual Entry Point
-- Single `rd` command serves both modes
+- Single `rdash` command serves both modes
 - Argument detection in `__main__.py` routes appropriately
 - Shared config and API client reduce code duplication
 
