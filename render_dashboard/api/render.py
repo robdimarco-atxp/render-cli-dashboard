@@ -132,12 +132,22 @@ class RenderClient:
         status_str = service_data.get("status", "unknown")
         status = self._parse_service_status(status_str)
 
+        # Get custom domain if available
+        custom_domain = None
+        service_details = service_data.get("serviceDetails", {})
+        if service_details.get("customDomains"):
+            custom_domains = service_details["customDomains"]
+            if isinstance(custom_domains, list) and len(custom_domains) > 0:
+                # Use the first custom domain
+                custom_domain = custom_domains[0].get("name") or custom_domains[0].get("domain")
+
         service = Service(
             id=service_data["id"],
             name=service_data.get("name", service_id),
             type=service_data.get("type", "unknown"),
             status=status,
             url=service_data.get("serviceDetails", {}).get("url"),
+            custom_domain=custom_domain,
         )
 
         return service
@@ -170,11 +180,37 @@ class RenderClient:
             # Get deploy ID with fallback
             deploy_id = deploy_data.get("id") or deploy_data.get("deployId", "unknown")
 
+            # Extract commit information
+            commit_sha = None
+            commit_message = None
+            repo_url = None
+
+            if "commit" in deploy_data and deploy_data["commit"]:
+                commit_info = deploy_data["commit"]
+                commit_sha = commit_info.get("id") or commit_info.get("sha")
+                commit_message = commit_info.get("message")
+
+            # Try to get repo URL from service or commit data
+            if "gitRepoUrl" in deploy_data:
+                repo_url = deploy_data["gitRepoUrl"]
+            elif "commit" in deploy_data and deploy_data["commit"]:
+                # Construct from commit data if available
+                commit_info = deploy_data["commit"]
+                if "gitRepoUrl" in commit_info:
+                    repo_url = commit_info["gitRepoUrl"]
+
+            # Clean up GitHub URL (remove .git suffix)
+            if repo_url and repo_url.endswith(".git"):
+                repo_url = repo_url[:-4]
+
             return Deploy(
                 id=deploy_id,
                 status=self._parse_deploy_status(deploy_data.get("status", "created")),
                 created_at=self._parse_datetime(deploy_data.get("createdAt")) or datetime.now(),
                 finished_at=self._parse_datetime(deploy_data.get("finishedAt")),
+                commit_sha=commit_sha,
+                commit_message=commit_message,
+                repo_url=repo_url,
             )
         except (RenderAPIError, KeyError, IndexError, TypeError):
             # If we can't get deploys, just return None rather than failing
@@ -230,6 +266,7 @@ class RenderClient:
                         type=s["type"],
                         status=ServiceStatus(s["status"]),
                         url=s.get("url"),
+                        custom_domain=s.get("custom_domain"),
                     )
                     for s in cached_data
                 ]
@@ -259,12 +296,21 @@ class RenderClient:
                     # Skip services without IDs
                     continue
 
+                # Get custom domain if available
+                custom_domain = None
+                service_details = service_data.get("serviceDetails", {})
+                if service_details.get("customDomains"):
+                    custom_domains = service_details["customDomains"]
+                    if isinstance(custom_domains, list) and len(custom_domains) > 0:
+                        custom_domain = custom_domains[0].get("name") or custom_domains[0].get("domain")
+
                 service = Service(
                     id=service_id,
                     name=service_data.get("name", service_id),
                     type=service_data.get("type", "unknown"),
                     status=self._parse_service_status(service_data.get("status", "unknown")),
                     url=service_data.get("serviceDetails", {}).get("url"),
+                    custom_domain=custom_domain,
                 )
                 services.append(service)
 
@@ -277,6 +323,7 @@ class RenderClient:
                         "type": s.type,
                         "status": s.status.value,
                         "url": s.url,
+                        "custom_domain": s.custom_domain,
                     }
                     for s in services
                 ]

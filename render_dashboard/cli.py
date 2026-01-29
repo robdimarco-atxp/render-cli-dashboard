@@ -52,20 +52,45 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
         async with RenderClient(api_key) as client:
             service = await client.get_service_with_deploy(service_config.id)
 
-            # Build status string
-            status_emoji = service.get_status_emoji()
-            status_parts = [
-                f"{status_emoji} {service.name}",
-                f"Status: {service.status.value}",
-                f"Type: {service.type}",
-            ]
+            # Build status string with colored icons
+            status_parts = []
 
-            if service.url:
+            # Service status with appropriate icon
+            if service.status.value == "available":
+                status_icon = "🟢"  # Green for live
+            elif service.status.value == "deploying":
+                status_icon = "🟠"  # Orange for deploying
+            elif service.status.value == "suspended":
+                status_icon = "⚫"  # Gray for suspended
+            elif service.status.value == "failed":
+                status_icon = "🔴"  # Red for failed
+            else:
+                status_icon = "⚪"  # White for unknown
+
+            status_parts.append(f"{status_icon} {service.name}")
+            status_parts.append(f"Status: {service.status.value}")
+            status_parts.append(f"Type: {service.type}")
+
+            # Prefer custom domain over onrender.com
+            if service.custom_domain:
+                status_parts.append(f"URL: https://{service.custom_domain}")
+            elif service.url:
                 status_parts.append(f"URL: {service.url}")
 
             if service.latest_deploy:
                 deploy = service.latest_deploy
-                status_parts.append(f"Latest deploy: {deploy.status.value}")
+
+                # Deploy status with icon
+                if deploy.status.value == "live":
+                    deploy_icon = "🟢"
+                elif deploy.is_in_progress:
+                    deploy_icon = "🟠"
+                elif deploy.status.value == "build_failed":
+                    deploy_icon = "🔴"
+                else:
+                    deploy_icon = "⚪"
+
+                status_parts.append(f"Latest deploy: {deploy_icon} {deploy.status.value}")
 
                 # Calculate time since deploy
                 from datetime import datetime, timezone
@@ -87,6 +112,11 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
                     time_ago = f"{delta.seconds}s ago"
 
                 status_parts.append(f"Deployed: {time_ago}")
+
+                # Add GitHub commit link if available
+                if deploy.commit_sha and deploy.repo_url:
+                    commit_url = f"{deploy.repo_url}/commit/{deploy.commit_sha}"
+                    status_parts.append(f"Commit: {deploy.commit_sha[:7]} - {commit_url}")
 
             return "\n".join(status_parts)
 

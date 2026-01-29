@@ -32,6 +32,9 @@ class Deploy:
     status: DeployStatus
     created_at: datetime
     finished_at: Optional[datetime] = None
+    commit_sha: Optional[str] = None
+    commit_message: Optional[str] = None
+    repo_url: Optional[str] = None
 
     @property
     def is_in_progress(self) -> bool:
@@ -51,6 +54,7 @@ class Service:
     type: str  # web service, cron job, static site, etc.
     status: ServiceStatus
     url: Optional[str] = None
+    custom_domain: Optional[str] = None
     latest_deploy: Optional[Deploy] = None
 
     def get_status_emoji(self) -> str:
