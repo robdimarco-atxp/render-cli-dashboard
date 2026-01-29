@@ -120,7 +120,7 @@ def handle_cli_command(args: list[str]) -> int:
         Exit code (0 for success, 1 for error)
     """
     if len(args) < 2:
-        print("Usage: rdash <service> <action>")
+        print("Usage: rdash <service> <action> [--no-browser]")
         print("")
         print("Actions:")
         print("  logs      - Open service logs in browser")
@@ -129,14 +129,22 @@ def handle_cli_command(args: list[str]) -> int:
         print("  settings  - Open service settings in browser")
         print("  status    - Show current service status")
         print("")
+        print("Options:")
+        print("  --no-browser  Print URL without opening browser")
+        print("")
         print("Examples:")
         print("  rdash chat logs")
         print("  rdash auth events")
         print("  rdash accounts status")
+        print("  rdash chat logs --no-browser")
         return 1
 
+    # Parse --no-browser flag
+    no_browser = "--no-browser" in args
+    args = [a for a in args if a != "--no-browser"]
+
     service_alias = args[0]
-    action = args[1].lower()
+    action = args[1].lower() if len(args) > 1 else ""
 
     # Validate action
     valid_actions = ["logs", "events", "metrics", "settings", "status"]
@@ -173,8 +181,12 @@ def handle_cli_command(args: list[str]) -> int:
         print(status)
         return 0
 
-    # Get URL and open in browser
+    # Get URL and open in browser (unless --no-browser)
     url = get_service_url(service_config.id, action)
+
+    if no_browser:
+        print(url)
+        return 0
 
     try:
         webbrowser.open(url)
