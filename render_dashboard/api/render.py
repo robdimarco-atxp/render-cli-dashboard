@@ -112,6 +112,40 @@ class RenderClient:
         except (ValueError, TypeError):
             return None
 
+    async def get_custom_domains(self, service_id: str) -> list[str]:
+        """Get custom domains for a service.
+
+        Args:
+            service_id: Render service ID
+
+        Returns:
+            List of custom domain names
+
+        Raises:
+            RenderAPIError: On API errors
+        """
+        try:
+            data = await self._request("GET", f"/services/{service_id}/custom-domains")
+
+            domains = []
+            if isinstance(data, list):
+                for domain_obj in data:
+                    if isinstance(domain_obj, dict):
+                        domain_name = domain_obj.get("name") or domain_obj.get("domain")
+                        if domain_name:
+                            domains.append(domain_name)
+            elif isinstance(data, dict) and "customDomains" in data:
+                for domain_obj in data["customDomains"]:
+                    if isinstance(domain_obj, dict):
+                        domain_name = domain_obj.get("name") or domain_obj.get("domain")
+                        if domain_name:
+                            domains.append(domain_name)
+
+            return domains
+        except RenderAPIError:
+            # Custom domains endpoint might not exist or return 404
+            return []
+
     async def get_service(self, service_id: str) -> Service:
         """Get service details and current status.
 
@@ -132,29 +166,15 @@ class RenderClient:
         status_str = service_data.get("status", "unknown")
         status = self._parse_service_status(status_str)
 
-        # Get custom domain if available
+        # Get custom domains from separate endpoint
         custom_domain = None
-
-        # Debug: Check both root and serviceDetails for customDomains
-        import json
-        print(f"DEBUG: Root service_data keys: {list(service_data.keys())}")
-
-        # Check in root level first
-        if "customDomains" in service_data:
-            print(f"DEBUG: customDomains in ROOT: {json.dumps(service_data['customDomains'], indent=2)}")
-            custom_domains = service_data["customDomains"]
-            if isinstance(custom_domains, list) and len(custom_domains) > 0:
-                domain_obj = custom_domains[0]
-                custom_domain = domain_obj.get("name") or domain_obj.get("domain") or domain_obj.get("domainName")
-                print(f"DEBUG: Found custom domain in root: {custom_domain}")
-
-        # Also check in envSpecificDetails which might have environment-specific domains
-        service_details = service_data.get("serviceDetails", {})
-        env_specific = service_details.get("envSpecificDetails", {})
-        if env_specific:
-            print(f"DEBUG: envSpecificDetails keys: {list(env_specific.keys())}")
-            if "customDomains" in env_specific:
-                print(f"DEBUG: customDomains in envSpecificDetails: {json.dumps(env_specific['customDomains'], indent=2)}")
+        try:
+            custom_domains = await self.get_custom_domains(service_id)
+            if custom_domains:
+                custom_domain = custom_domains[0]  # Use first custom domain
+                print(f"DEBUG: Found custom domain: {custom_domain}")
+        except Exception as e:
+            print(f"DEBUG: Could not fetch custom domains: {e}")
 
         service = Service(
             id=service_data["id"],
