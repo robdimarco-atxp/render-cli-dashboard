@@ -48,6 +48,8 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
     Returns:
         Formatted status string
     """
+    from .utils import time_ago
+
     try:
         async with RenderClient(api_key) as client:
             service = await client.get_service_with_deploy(service_config.id)
@@ -95,26 +97,7 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
                 deploy_status_text = deploy.status.value.replace("_", " ").title()
                 status_parts.append(f"Deployment: {deploy_icon} {deploy_status_text}")
 
-                # Calculate time since deploy
-                from datetime import datetime, timezone
-                now = datetime.now(timezone.utc)
-                if deploy.created_at.tzinfo is None:
-                    # Make naive datetime aware
-                    created_at = deploy.created_at.replace(tzinfo=timezone.utc)
-                else:
-                    created_at = deploy.created_at
-
-                delta = now - created_at
-                if delta.days > 0:
-                    time_ago = f"{delta.days}d ago"
-                elif delta.seconds >= 3600:
-                    time_ago = f"{delta.seconds // 3600}h ago"
-                elif delta.seconds >= 60:
-                    time_ago = f"{delta.seconds // 60}m ago"
-                else:
-                    time_ago = f"{delta.seconds}s ago"
-
-                status_parts.append(f"Deployed: {time_ago}")
+                status_parts.append(f"Deployed: {time_ago(deploy.created_at)}")
 
                 # Add GitHub commit link if available
                 if deploy.commit_sha and deploy.repo_url:

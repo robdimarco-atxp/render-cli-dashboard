@@ -1,12 +1,12 @@
 """Custom widgets for the TUI dashboard."""
 from typing import Optional
+from datetime import datetime
 from textual.app import ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.widgets import Static, Label, OptionList
 from textual.widgets.option_list import Option
 from textual.message import Message
 from textual.screen import ModalScreen
-from datetime import datetime, timezone
 
 from ..models import Service, EnvVar
 
