@@ -28,11 +28,20 @@ class DashboardApp(App):
     }
 
     #search-input {
-        height: 3;
+        height: 0;
         margin: 0 1;
         padding: 0 1;
         border: solid $primary;
         background: $panel;
+        overflow: hidden;
+    }
+
+    #search-input.visible {
+        height: 3;
+    }
+
+    #search-input:focus {
+        border: heavy yellow;
     }
 
     .error-message {
@@ -237,17 +246,35 @@ class DashboardApp(App):
             self._open_service_url(service_id, "settings")
 
     async def action_search(self) -> None:
-        """Focus the search input."""
+        """Show and focus the search input."""
+        if not self.service_cards:
+            return  # No services to search
+
         search_input = self.query_one("#search-input", Input)
+        search_input.value = ""  # Clear any previous search
+
+        # Make sure all services are visible
+        for card in self.service_cards.values():
+            card.styles.display = "block"
+
+        search_input.add_class("visible")
         search_input.focus()
 
     def action_cancel_search(self) -> None:
-        """Clear search and focus first service."""
+        """Hide search and focus first service."""
         search_input = self.query_one("#search-input", Input)
+
+        # Only act if search is visible
+        if not search_input.has_class("visible"):
+            return
+
+        search_input.remove_class("visible")
         search_input.value = ""
+
         # Show all services
         for card in self.service_cards.values():
             card.styles.display = "block"
+
         # Focus first service card
         if self.service_cards:
             first_card = next(iter(self.service_cards.values()))

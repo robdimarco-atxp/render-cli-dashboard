@@ -138,9 +138,16 @@ class ServiceCard(Container):
             service: Updated service data
         """
         self.service = service
-        # Clear and re-compose
-        self.remove_children()
-        self.mount_all(self.compose())
+        # Update existing widgets instead of recreating
+        self._update_header_display()
+
+        # Update details if they exist
+        try:
+            details = self.query_one(".service-details", Static)
+            details.update(self._format_details())
+        except Exception:
+            # Details widget doesn't exist, skip
+            pass
 
     def _update_header_display(self) -> None:
         """Update header with selection indicator."""
