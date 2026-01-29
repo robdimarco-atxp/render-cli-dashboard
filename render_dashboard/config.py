@@ -66,7 +66,7 @@ def load_config(config_path: Optional[Path] = None, allow_empty_services: bool =
             raise ConfigError(
                 "No config.yaml found. Please create one in the current directory "
                 "or in ~/.config/render-dashboard/.\n"
-                "You can create a basic config with: rd service add <service-name>"
+                "You can create a basic config with: rdash service add <service-name>"
             )
 
     if not config_path.exists():
@@ -103,7 +103,7 @@ def load_config(config_path: Optional[Path] = None, allow_empty_services: bool =
     if not services_data and not allow_empty_services:
         raise ConfigError(
             "No services configured. Add services with:\n"
-            "  rd service add <service-name>"
+            "  rdash service add <service-name>"
         )
 
     services = []

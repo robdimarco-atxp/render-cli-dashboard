@@ -107,8 +107,8 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
             print()
             print("You can now use:")
             for alias in aliases:
-                print(f"  rd {alias} logs")
-                print(f"  rd {alias} status")
+                print(f"  rdash {alias} logs")
+                print(f"  rdash {alias} status")
             return 0
 
         except ConfigError as e:
@@ -192,13 +192,13 @@ def handle_service_management(args: list[str]) -> int:
     """Handle service management commands.
 
     Args:
-        args: Command arguments after 'rd service'
+        args: Command arguments after 'rdash service'
 
     Returns:
         Exit code
     """
     if len(args) == 0:
-        print("Usage: rd service <command>")
+        print("Usage: rdash service <command>")
         print()
         print("Commands:")
         print("  add <name>     - Search and add a service by name")
@@ -206,18 +206,18 @@ def handle_service_management(args: list[str]) -> int:
         print("  remove <alias> - Remove a service from config")
         print()
         print("Examples:")
-        print("  rd service add chat")
-        print("  rd service list")
-        print("  rd service remove chat")
+        print("  rdash service add chat")
+        print("  rdash service list")
+        print("  rdash service remove chat")
         return 1
 
     command = args[0].lower()
 
     if command == "add":
         if len(args) < 2:
-            print("Usage: rd service add <name>")
+            print("Usage: rdash service add <name>")
             print()
-            print("Example: rd service add chat")
+            print("Example: rdash service add chat")
             return 1
 
         search_term = args[1]
@@ -244,9 +244,9 @@ def handle_service_management(args: list[str]) -> int:
 
     elif command == "remove":
         if len(args) < 2:
-            print("Usage: rd service remove <alias>")
+            print("Usage: rdash service remove <alias>")
             print()
-            print("Example: rd service remove chat")
+            print("Example: rdash service remove chat")
             return 1
 
         alias_or_id = args[1]

@@ -11,7 +11,7 @@ def main() -> int:
     Routes:
     - No arguments: TUI dashboard mode
     - 'service' subcommand: Service management (add, list, remove)
-    - Other arguments: CLI command mode (rd <service> <action>)
+    - Other arguments: CLI command mode (rdash <service> <action>)
 
     Returns:
         Exit code
@@ -25,7 +25,7 @@ def main() -> int:
         # Service management commands
         return handle_service_management(args[1:])
     else:
-        # CLI command mode (rd <service> <action>)
+        # CLI command mode (rdash <service> <action>)
         return handle_cli_command(args)
 
 

@@ -104,7 +104,7 @@ def handle_cli_command(args: list[str]) -> int:
         Exit code (0 for success, 1 for error)
     """
     if len(args) < 2:
-        print("Usage: rd <service> <action>")
+        print("Usage: rdash <service> <action>")
         print("")
         print("Actions:")
         print("  logs      - Open service logs in browser")
@@ -114,9 +114,9 @@ def handle_cli_command(args: list[str]) -> int:
         print("  status    - Show current service status")
         print("")
         print("Examples:")
-        print("  rd chat logs")
-        print("  rd auth events")
-        print("  rd accounts status")
+        print("  rdash chat logs")
+        print("  rdash auth events")
+        print("  rdash accounts status")
         return 1
 
     service_alias = args[0]
