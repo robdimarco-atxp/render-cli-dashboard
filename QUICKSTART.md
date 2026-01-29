@@ -32,31 +32,31 @@ echo 'export RENDER_API_KEY="rnd_xxxxxxxxxxxx"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-## Step 3: Configure Services (2 minutes)
+## Step 3: Add Your Services (2 minutes)
+
+Use the interactive service manager to discover and add services:
 
 ```bash
-cp config.yaml.example config.yaml
+# Search for your service (e.g., "api", "chat", "web")
+rd service add api
+
+# Follow the prompts:
+# 1. Select service if multiple matches
+# 2. Enter alias (or press Enter for default)
+# 3. Optionally add more aliases
 ```
 
-Edit `config.yaml` and add your services. To find service IDs:
+The service is automatically added to `config.yaml` - no manual editing needed!
 
-1. Go to https://dashboard.render.com
-2. Click on a service
-3. Look at the URL: `https://dashboard.render.com/web/srv-xxxxxxxxxxxxx`
-4. Copy the `srv-xxxxxxxxxxxxx` part
+**Add more services:**
+```bash
+rd service add chat
+rd service add auth
+```
 
-Example config:
-
-```yaml
-render:
-  api_key: ${RENDER_API_KEY}
-  refresh_interval: 30
-
-services:
-  - id: "srv-cm123abc456def"
-    name: "My API"
-    aliases: ["api", "backend"]
-    priority: 1
+**View configured services:**
+```bash
+rd service list
 ```
 
 ## Step 4: Try It!

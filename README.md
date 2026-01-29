@@ -51,6 +51,23 @@ Add this to your `~/.zshrc` or `~/.bashrc` to persist it.
 
 ### 3. Configure Your Services
 
+**Option A: Automatic Discovery (Recommended)**
+
+Use the interactive service manager to discover and add services:
+
+```bash
+# Search for a service and add it
+rd service add chat
+
+# It will:
+# 1. Search your Render account for services matching "chat"
+# 2. Let you select if multiple matches
+# 3. Prompt for aliases
+# 4. Automatically add to config.yaml
+```
+
+**Option B: Manual Configuration**
+
 ```bash
 cp config.yaml.example config.yaml
 ```
@@ -69,13 +86,39 @@ services:
     priority: 1
 ```
 
-**Finding your service IDs:**
+**Finding your service IDs manually:**
 1. Go to https://dashboard.render.com
 2. Click on a service
 3. The URL will be: `https://dashboard.render.com/web/srv-xxxxxxxxxxxxx`
 4. Copy the `srv-xxxxxxxxxxxxx` part
 
 ## Usage
+
+### Service Management Commands
+
+```bash
+# Add a service interactively
+rd service add <name>
+
+# List configured services
+rd service list
+
+# Remove a service
+rd service remove <alias>
+```
+
+**Examples:**
+```bash
+# Search and add a service named "chat"
+rd service add chat
+# Prompts for aliases, automatically adds to config
+
+# List all configured services
+rd service list
+
+# Remove a service by alias
+rd service remove chat
+```
 
 ### TUI Dashboard Mode (Interactive)
 

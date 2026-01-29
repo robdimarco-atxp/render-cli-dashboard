@@ -2,13 +2,16 @@
 import sys
 from .cli import handle_cli_command
 from .ui import run_dashboard
+from .service_manager import handle_service_management
 
 
 def main() -> int:
     """Main entry point that routes to CLI or TUI mode.
 
-    If arguments are provided, runs in CLI mode (rd chat logs).
-    If no arguments, runs TUI dashboard mode.
+    Routes:
+    - No arguments: TUI dashboard mode
+    - 'service' subcommand: Service management (add, list, remove)
+    - Other arguments: CLI command mode (rd <service> <action>)
 
     Returns:
         Exit code
@@ -18,8 +21,11 @@ def main() -> int:
     if len(args) == 0:
         # No arguments - run TUI dashboard
         return run_dashboard()
+    elif args[0] == "service":
+        # Service management commands
+        return handle_service_management(args[1:])
     else:
-        # Arguments provided - run CLI command
+        # CLI command mode (rd <service> <action>)
         return handle_cli_command(args)
 
 

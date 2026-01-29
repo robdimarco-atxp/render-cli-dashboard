@@ -196,3 +196,35 @@ class RenderClient:
 
         service.latest_deploy = latest_deploy
         return service
+
+    async def list_services(self, limit: int = 100) -> list[Service]:
+        """List all services for the authenticated user.
+
+        Args:
+            limit: Maximum number of services to return (default 100)
+
+        Returns:
+            List of Service objects
+
+        Raises:
+            RenderAPIError: On API errors
+        """
+        try:
+            data = await self._request("GET", "/services", params={"limit": limit})
+
+            services_data = data if isinstance(data, list) else data.get("services", [])
+            services = []
+
+            for service_data in services_data:
+                service = Service(
+                    id=service_data["id"],
+                    name=service_data.get("name", service_data["id"]),
+                    type=service_data.get("type", "unknown"),
+                    status=self._parse_service_status(service_data.get("status", "unknown")),
+                    url=service_data.get("serviceDetails", {}).get("url"),
+                )
+                services.append(service)
+
+            return services
+        except RenderAPIError as e:
+            raise e

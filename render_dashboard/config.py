@@ -41,12 +41,13 @@ def _substitute_env_vars(value: str) -> str:
     return value
 
 
-def load_config(config_path: Optional[Path] = None) -> AppConfig:
+def load_config(config_path: Optional[Path] = None, allow_empty_services: bool = False) -> AppConfig:
     """Load and validate configuration from YAML file.
 
     Args:
         config_path: Path to config.yaml. If None, looks in current directory
                     and then in ~/.config/render-dashboard/
+        allow_empty_services: If True, allows empty services list (for initial setup)
 
     Returns:
         Validated AppConfig object
@@ -64,7 +65,8 @@ def load_config(config_path: Optional[Path] = None) -> AppConfig:
         if not config_path.exists():
             raise ConfigError(
                 "No config.yaml found. Please create one in the current directory "
-                "or in ~/.config/render-dashboard/. See README.md for an example."
+                "or in ~/.config/render-dashboard/.\n"
+                "You can create a basic config with: rd service add <service-name>"
             )
 
     if not config_path.exists():
@@ -98,8 +100,11 @@ def load_config(config_path: Optional[Path] = None) -> AppConfig:
 
     # Parse services
     services_data = data.get("services", [])
-    if not services_data:
-        raise ConfigError("No services configured. Add at least one service to 'services' list")
+    if not services_data and not allow_empty_services:
+        raise ConfigError(
+            "No services configured. Add services with:\n"
+            "  rd service add <service-name>"
+        )
 
     services = []
     for i, service_data in enumerate(services_data):
@@ -167,3 +172,119 @@ def find_service_by_alias(config: AppConfig, alias: str) -> Optional[ServiceConf
             f"Multiple services match '{alias}':\n{match_list}\n\n"
             f"Use a more specific alias or service name."
         )
+
+
+def get_config_path() -> Path:
+    """Get the path to config file (checking standard locations).
+
+    Returns:
+        Path to config file, or default location if not found
+    """
+    # Check current directory first
+    config_path = Path("config.yaml")
+    if config_path.exists():
+        return config_path
+
+    # Check home directory
+    config_path = Path.home() / ".config" / "render-dashboard" / "config.yaml"
+    if config_path.exists():
+        return config_path
+
+    # Default to current directory for new configs
+    return Path("config.yaml")
+
+
+def add_service_to_config(
+    service_id: str,
+    service_name: str,
+    aliases: list[str],
+    priority: int = 1,
+    config_path: Optional[Path] = None
+) -> None:
+    """Add a new service to the config file.
+
+    Args:
+        service_id: Render service ID
+        service_name: Display name for service
+        aliases: List of aliases for CLI access
+        priority: Display priority (default 1)
+        config_path: Path to config file (uses default locations if None)
+
+    Raises:
+        ConfigError: If config file issues occur
+    """
+    if config_path is None:
+        config_path = get_config_path()
+
+    # Load existing config or create new one
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            data = yaml.safe_load(f) or {}
+    else:
+        # Create parent directory if needed
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "render": {
+                "api_key": "${RENDER_API_KEY}",
+                "refresh_interval": 30
+            },
+            "services": []
+        }
+
+    # Check if service already exists
+    services = data.get("services", [])
+    for service in services:
+        if service.get("id") == service_id:
+            raise ConfigError(f"Service {service_id} already exists in config")
+
+    # Add new service
+    new_service = {
+        "id": service_id,
+        "name": service_name,
+        "aliases": aliases,
+        "priority": priority
+    }
+    services.append(new_service)
+    data["services"] = services
+
+    # Write back to file
+    with open(config_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+
+
+def remove_service_from_config(
+    service_id: str,
+    config_path: Optional[Path] = None
+) -> None:
+    """Remove a service from the config file.
+
+    Args:
+        service_id: Render service ID to remove
+        config_path: Path to config file (uses default locations if None)
+
+    Raises:
+        ConfigError: If service not found or config file issues
+    """
+    if config_path is None:
+        config_path = get_config_path()
+
+    if not config_path.exists():
+        raise ConfigError("No config file found")
+
+    with open(config_path, "r") as f:
+        data = yaml.safe_load(f) or {}
+
+    services = data.get("services", [])
+    original_length = len(services)
+
+    # Remove service with matching ID
+    services = [s for s in services if s.get("id") != service_id]
+
+    if len(services) == original_length:
+        raise ConfigError(f"Service {service_id} not found in config")
+
+    data["services"] = services
+
+    # Write back to file
+    with open(config_path, "w") as f:
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
