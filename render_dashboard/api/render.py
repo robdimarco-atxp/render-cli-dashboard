@@ -166,6 +166,13 @@ class RenderClient:
         """
         data = await self._request("GET", f"/services/{service_id}")
 
+        # DEBUG: Print the entire response to see structure
+        print("=" * 80)
+        print(f"DEBUG: Full service response for {service_id}:")
+        import json
+        print(json.dumps(data, indent=2, default=str))
+        print("=" * 80)
+
         service_data = data.get("service", data)  # Handle wrapped or unwrapped response
 
         # Determine status - if actively deploying, mark as deploying
