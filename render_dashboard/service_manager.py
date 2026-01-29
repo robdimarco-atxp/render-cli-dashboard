@@ -52,12 +52,6 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
         async with RenderClient(api_key) as client:
             all_services = await client.list_services()
 
-            # Debug: Show what we got
-            print(f"DEBUG: Found {len(all_services)} total services")
-            if all_services:
-                print("DEBUG: First service:", all_services[0].name if all_services else "N/A")
-            print()
-
         if not all_services:
             print("No services found in your Render account.")
             print("Make sure you have services created at https://dashboard.render.com")
