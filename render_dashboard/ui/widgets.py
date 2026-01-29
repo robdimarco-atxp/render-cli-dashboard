@@ -47,22 +47,6 @@ class ServiceCard(Container):
         color: $success;
         text-style: bold;
     }
-
-    .status-running {
-        color: green;
-    }
-
-    .status-deploying {
-        color: yellow;
-    }
-
-    .status-failed {
-        color: red;
-    }
-
-    .status-suspended {
-        color: gray;
-    }
     """
 
     class ServiceSelected(Message):
@@ -87,10 +71,19 @@ class ServiceCard(Container):
         """Compose the service card layout."""
         # Header with name and status
         status_emoji = self.service.get_status_emoji()
-        status_color_class = f"status-{self.service.status.value.replace('_', '-')}"
+
+        # Map status to Rich color names
+        status_colors = {
+            "available": "green",
+            "deploying": "yellow",
+            "failed": "red",
+            "suspended": "bright_black",
+            "unknown": "white"
+        }
+        status_color = status_colors.get(self.service.status.value, "white")
 
         header_text = f"{self.service.name}"
-        status_text = f"[{status_color_class}]{status_emoji}[/] {self.service.status.value.title()}"
+        status_text = f"[{status_color}]{status_emoji} {self.service.status.value.title()}[/]"
 
         yield Static(
             f"{header_text}  {status_text}  [dim]{self.service.id}[/]",
@@ -102,9 +95,9 @@ class ServiceCard(Container):
         if details:
             yield Static(details, classes="service-details")
 
-        # Actions (escape brackets with double brackets for Rich markup)
+        # Actions (highlight action keys without brackets to avoid markup issues)
         yield Static(
-            "[[L]]ogs | [[E]]vents | [[D]]eploys | [[S]]ettings",
+            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]D[/]eploys | [bold cyan]S[/]ettings",
             classes="service-actions"
         )
 
@@ -204,7 +197,7 @@ class StatusBar(Static):
         else:
             text = "Loading..."
 
-        controls = "[[R]] Refresh | [[Q]] Quit | Auto-refresh: enabled"
+        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: enabled"
         # Pad to full width
         self.update(f" {text}  |  {controls}")
 
