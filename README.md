@@ -12,10 +12,14 @@ A dual-mode terminal tool for managing Render services with both a visual TUI da
 - **Clean, focused interface** built with Textual
 
 ### ⚡ CLI Command Mode
-- **Lightning-fast access**: `rd chat logs` opens your chat server logs instantly
+- **Lightning-fast access**: `rdash chat logs` opens your chat server logs instantly
 - **Smart service matching**: Partial matches and aliases work seamlessly
 - **Browser integration**: Opens Render dashboard URLs automatically
-- **Status checks**: `rd chat status` shows current status without opening browser
+- **Quick status checks**: `rdash chat status` shows current status with:
+  - Service status with color-coded icons (🟢 available, 🟠 deploying, 🔴 failed)
+  - Custom domain URL (or fallback to Render URL)
+  - Latest deployment status and time
+  - GitHub commit link (commit SHA + full URL)
 
 ## Installation
 
@@ -142,25 +146,25 @@ Perfect for keeping open in a tmux pane for at-a-glance monitoring!
 ### CLI Command Mode (Fast Access)
 
 ```bash
-rd <service> <action>
+rdash <service> <action>
 ```
 
 **Examples:**
 ```bash
 # Open chat server logs
-rd chat logs
+rdash chat logs
 
 # Open auth server events
-rd auth events
+rdash auth events
 
 # Show accounts API status (no browser)
-rd accounts status
+rdash accounts status
 
 # Open deploys page
-rd chat deploys
+rdash chat deploys
 
 # Partial matching works too
-rd ch logs  # matches "chat" if unique
+rdash ch logs  # matches "chat" if unique
 ```
 
 **Available actions:**
@@ -227,11 +231,11 @@ _rd_generate_completions() {
     # Write completions to cache
     {
         for alias in $aliases; do
-            echo "rd $alias logs"
-            echo "rd $alias events"
-            echo "rd $alias deploys"
-            echo "rd $alias settings"
-            echo "rd $alias status"
+            echo "rdash $alias logs"
+            echo "rdash $alias events"
+            echo "rdash $alias deploys"
+            echo "rdash $alias settings"
+            echo "rdash $alias status"
         done
     } > "$_RD_CACHE_FILE"
 }
@@ -258,7 +262,7 @@ _rd_completion() {
 }
 
 # Register completion
-compdef _rd_completion rd
+compdef _rd_completion rdash
 
 # Generate initial completions
 _rd_generate_completions
@@ -284,14 +288,14 @@ plugins=(
 source ~/.zshrc
 ```
 
-Now when you type `rd `, zsh-autosuggestions will suggest your configured service commands based on your history! Type `rd chat` and it will suggest `rd chat logs`, `rd chat events`, etc.
+Now when you type `rdash `, zsh-autosuggestions will suggest your configured service commands based on your history! Type `rdash chat` and it will suggest `rdash chat logs`, `rdash chat events`, etc.
 
 ### Bash Completion
 
 For bash users, add this to your `~/.bashrc`:
 
 ```bash
-_rd_completion() {
+_rdash_completion() {
     local cur prev services actions
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -307,7 +311,7 @@ _rd_completion() {
     fi
 }
 
-complete -F _rd_completion rd
+complete -F _rdash_completion rdash
 ```
 
 ## Configuration Reference
@@ -338,7 +342,7 @@ services:
    # In your render-dashboard directory
    source .venv/bin/activate
    tmux new-session -s render
-   rd
+   rdash
    # Ctrl+B, D to detach
    ```
 
@@ -346,8 +350,8 @@ services:
    ```bash
    # Remember to activate venv first (or add to shell startup)
    source /path/to/render-dashboard/.venv/bin/activate
-   rd chat logs      # Opens in browser instantly
-   rd auth status    # Quick status check
+   rdash chat logs      # Opens in browser instantly
+   rdash auth status    # Quick status check
    ```
 
 3. **Auto-activate venv**: Add to your shell startup for convenience

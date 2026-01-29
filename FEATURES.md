@@ -17,25 +17,37 @@
 - **Status bar** - Shows last update time and controls
 - **Responsive layout** - Clean, focused interface that works in any terminal size
 
-#### CLI Command Mode (`rd <service> <action>`)
-- **Lightning-fast access** - `rd chat logs` opens logs instantly
+#### CLI Command Mode (`rdash <service> <action>`)
+- **Lightning-fast access** - `rdash chat logs` opens logs instantly
 - **Smart service matching**
-  - Exact match: `rd chat logs`
-  - Partial match: `rd ch logs` (if unique)
-  - Alias support: `rd c logs` if "c" is an alias
+  - Exact match: `rdash chat logs`
+  - Partial match: `rdash ch logs` (if unique)
+  - Alias support: `rdash c logs` if "c" is an alias
 - **Browser integration** - Automatically opens Render dashboard URLs
-- **Status checks** - `rd chat status` shows info without opening browser
+- **Enhanced status checks** - `rdash chat status` shows:
+  - Color-coded service status (🟢 available, 🟠 deploying, 🔴 failed, ⚫ suspended)
+  - Custom domain URL (prioritized over Render's onrender.com URLs)
+  - Latest deployment status with colored icons
+  - Time since deployment (smart formatting: 5m ago, 2h ago, 3d ago)
+  - **GitHub commit links** - Direct links to deployed commits with short SHA
 - **Helpful errors** - Shows available services if match fails
 
 ### 2. Service Management
 
 #### Service Information Display
 - Service name and ID
-- Current status (running, deploying, suspended, failed)
+- Current status with color-coded icons:
+  - 🟢 Green = Available/Running
+  - 🟠 Orange = Deploying
+  - 🔴 Red = Failed
+  - ⚫ Gray = Suspended
 - Service type (web service, cron job, etc.)
-- Service URL (if available)
-- Latest deployment status
+- **Custom domain URL** (prioritized) or Render URL (fallback)
+- Latest deployment status with colored icons
 - Time since last deployment (smart formatting: seconds, minutes, hours, days)
+- **GitHub commit information**:
+  - Short commit SHA (first 7 characters)
+  - Full commit URL (clickable in most terminals)
 - Deployment progress indication (for in-progress deploys)
 
 #### Supported Actions
@@ -75,8 +87,9 @@
   - Timeout errors
 
 #### API Endpoints Used
-- `GET /v1/services/{serviceId}` - Service details
-- `GET /v1/services/{serviceId}/deploys` - Deployment history
+- `GET /v1/services/{serviceId}` - Service details and repository URL
+- `GET /v1/services/{serviceId}/deploys` - Deployment history with commit info
+- `GET /v1/services/{serviceId}/custom-domains` - Custom domain configuration
 
 ### 5. Shell Integration
 
@@ -210,8 +223,8 @@
 
 ### Quick Actions
 - `rdash api logs` - Instant access to logs
-- `rd db status` - Check database status
-- `rd web events` - View recent events
+- `rdash db status` - Check database status
+- `rdash web events` - View recent events
 - No need to open browser and navigate
 
 ### Debugging
