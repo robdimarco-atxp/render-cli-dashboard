@@ -49,32 +49,31 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
         print(f"Searching for services matching '{search_term}'...")
         print()
 
-        try:
-            async with RenderClient(api_key) as client:
-                all_services = await client.list_services()
+        async with RenderClient(api_key) as client:
+            all_services = await client.list_services()
 
-                # Debug: Show what we got
-                print(f"DEBUG: Found {len(all_services)} total services")
-                if all_services:
-                    print("DEBUG: First service:", all_services[0].name if all_services else "N/A")
-                print()
+            # Debug: Show what we got
+            print(f"DEBUG: Found {len(all_services)} total services")
+            if all_services:
+                print("DEBUG: First service:", all_services[0].name if all_services else "N/A")
+            print()
 
-            if not all_services:
-                print("No services found in your Render account.")
-                print("Make sure you have services created at https://dashboard.render.com")
-                print()
-                print("If you know the service ID, you can add it directly:")
-                print("  rdash service add srv-xxxxxxxxxxxxx")
-                return 1
+        if not all_services:
+            print("No services found in your Render account.")
+            print("Make sure you have services created at https://dashboard.render.com")
+            print()
+            print("If you know the service ID, you can add it directly:")
+            print("  rdash service add srv-xxxxxxxxxxxxx")
+            return 1
 
-            # Filter services matching search term
-            search_lower = search_term.lower()
-            matches = [
-                s for s in all_services
-                if search_lower in s.name.lower() or search_lower in s.id.lower()
-            ]
+        # Filter services matching search term
+        search_lower = search_term.lower()
+        matches = [
+            s for s in all_services
+            if search_lower in s.name.lower() or search_lower in s.id.lower()
+        ]
 
-        if not matches and not search_term.startswith("srv-"):
+        if not matches:
             print(f"No services found matching '{search_term}'")
             print()
             print("Available services:")
@@ -89,11 +88,11 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
 
     # Show matches (used by both search and direct ID lookup)
     if len(matches) == 1:
-            service = matches[0]
-            if not search_term.startswith("srv-"):
-                # Only print this if we searched (not direct ID lookup)
-                print(f"Found: {service.name} ({service.id})")
-                print()
+        service = matches[0]
+        if not search_term.startswith("srv-"):
+            # Only print this if we searched (not direct ID lookup)
+            print(f"Found: {service.name} ({service.id})")
+            print()
     else:
         print(f"Found {len(matches)} matching services:")
         for i, service in enumerate(matches, 1):
