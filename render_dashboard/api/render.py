@@ -224,12 +224,6 @@ class RenderClient:
             # Extract nested deploy object (response format: {deploy: {...}, cursor: "..."})
             deploy_data = deploy_item.get("deploy", deploy_item)
 
-            # DEBUG: Show what we got
-            import json
-            print("DEBUG: Latest deploy data:")
-            print(json.dumps(deploy_data, indent=2, default=str))
-            print()
-
             # Get deploy ID with fallback
             deploy_id = deploy_data.get("id") or deploy_data.get("deployId", "unknown")
 
@@ -242,26 +236,16 @@ class RenderClient:
                 commit_info = deploy_data["commit"]
                 commit_sha = commit_info.get("id") or commit_info.get("sha")
                 commit_message = commit_info.get("message")
-                print(f"DEBUG: Found commit - sha={commit_sha}, message={commit_message}")
-            else:
-                print("DEBUG: No commit field in deploy_data")
 
             # Use repo_url parameter if provided, otherwise try to extract from deploy data
             if not repo_url:
                 if "gitRepoUrl" in deploy_data:
                     repo_url = deploy_data["gitRepoUrl"]
-                    print(f"DEBUG: Found repo_url in deploy_data: {repo_url}")
                 elif "commit" in deploy_data and deploy_data["commit"]:
                     # Construct from commit data if available
                     commit_info = deploy_data["commit"]
                     if "gitRepoUrl" in commit_info:
                         repo_url = commit_info["gitRepoUrl"]
-                        print(f"DEBUG: Found repo_url in commit_info: {repo_url}")
-            else:
-                print(f"DEBUG: Using passed-in repo_url: {repo_url}")
-
-            if not repo_url:
-                print("DEBUG: No repo_url found")
 
             # Clean up GitHub URL (remove .git suffix)
             if repo_url and repo_url.endswith(".git"):
@@ -298,10 +282,8 @@ class RenderClient:
 
         # Extract repo URL for commit links
         repo_url = service_data.get("repo")
-        print(f"DEBUG get_service_with_deploy: service_data.get('repo') = {repo_url}")
         if repo_url and repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
-        print(f"DEBUG get_service_with_deploy: cleaned repo_url = {repo_url}")
 
         # Build service object (inline to avoid duplicate API call)
         # Render API doesn't provide a direct "status" field, derive from suspended field
@@ -328,9 +310,7 @@ class RenderClient:
         )
 
         # Override status if deployment is in progress, passing repo URL for commit links
-        print(f"DEBUG get_service_with_deploy: About to call get_latest_deploy with repo_url={repo_url}")
         latest_deploy = await self.get_latest_deploy(service_id, repo_url=repo_url)
-        print(f"DEBUG get_service_with_deploy: get_latest_deploy returned, latest_deploy.repo_url={latest_deploy.repo_url if latest_deploy else None}")
         if latest_deploy and latest_deploy.is_in_progress:
             service.status = ServiceStatus.DEPLOYING
 
@@ -373,18 +353,6 @@ class RenderClient:
         try:
             data = await self._request("GET", "/services", params={"limit": limit})
 
-            # DEBUG: Show what we got
-            import json
-            print(f"DEBUG list_services: Response type: {type(data)}")
-            print(f"DEBUG list_services: Response keys: {data.keys() if isinstance(data, dict) else 'N/A'}")
-            if isinstance(data, list):
-                print(f"DEBUG list_services: Response is list with {len(data)} items")
-                if len(data) > 0:
-                    print(f"DEBUG list_services: First item keys: {data[0].keys() if isinstance(data[0], dict) else 'N/A'}")
-                    print(f"DEBUG list_services: First item: {json.dumps(data[0], indent=2, default=str)[:500]}")
-            elif isinstance(data, dict) and "services" in data:
-                print(f"DEBUG list_services: Response has 'services' key with {len(data.get('services', []))} items")
-
             # Handle different response formats
             if isinstance(data, list):
                 services_data = data
@@ -394,14 +362,11 @@ class RenderClient:
             else:
                 services_data = []
 
-            print(f"DEBUG list_services: Extracted {len(services_data)} services from response")
-
             services = []
 
-            for idx, item in enumerate(services_data):
+            for item in services_data:
                 # Skip if not a dict
                 if not isinstance(item, dict):
-                    print(f"DEBUG list_services: Item {idx} is not a dict, skipping")
                     continue
 
                 # Extract nested service object (response format: {service: {...}, cursor: "..."})
@@ -410,10 +375,8 @@ class RenderClient:
                 # Get required fields with fallbacks
                 service_id = service_data.get("id") or service_data.get("serviceId")
                 if not service_id:
-                    print(f"DEBUG list_services: Item {idx} has no ID, skipping")
+                    # Skip services without IDs
                     continue
-
-                print(f"DEBUG list_services: Processing service {idx}: id={service_id}, name={service_data.get('name')}")
 
                 # Get custom domain if available
                 custom_domain = None
