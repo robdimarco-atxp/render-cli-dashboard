@@ -1,0 +1,32 @@
+# Render Services Dashboard Configuration
+# Copy this to config.yaml and update with your service details
+
+render:
+  # API key - use environment variable substitution
+  api_key: ${RENDER_API_KEY}
+
+  # Auto-refresh interval in seconds
+  refresh_interval: 30
+
+# List of services to monitor
+services:
+  - id: "srv-xxxxxxxxxxxxx"  # Get from Render dashboard URL
+    name: "Chat Server"
+    aliases: ["chat", "chat-server"]  # For CLI mode: "rd chat logs"
+    priority: 1
+
+  - id: "srv-yyyyyyyyyyyyyyy"
+    name: "Auth Server"
+    aliases: ["auth", "authentication"]
+    priority: 1
+
+  - id: "srv-zzzzzzzzzzzzzzz"
+    name: "Accounts API"
+    aliases: ["accounts", "acc", "account"]
+    priority: 1
+
+# To find your service IDs:
+# 1. Go to https://dashboard.render.com
+# 2. Click on a service
+# 3. The URL will be: https://dashboard.render.com/web/srv-xxxxxxxxxxxxx
+# 4. Copy the "srv-xxxxxxxxxxxxx" part
