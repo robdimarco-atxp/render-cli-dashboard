@@ -5,6 +5,7 @@ from typing import Optional
 from dateutil import parser as dateparser
 
 from ..models import Service, Deploy, ServiceStatus, DeployStatus
+from ..cache import SimpleCache
 
 
 class RenderAPIError(Exception):
@@ -197,11 +198,12 @@ class RenderClient:
         service.latest_deploy = latest_deploy
         return service
 
-    async def list_services(self, limit: int = 100) -> list[Service]:
+    async def list_services(self, limit: int = 100, use_cache: bool = True) -> list[Service]:
         """List all services for the authenticated user.
 
         Args:
             limit: Maximum number of services to return (default 100)
+            use_cache: Whether to use cached results (default True, 5 min TTL)
 
         Returns:
             List of Service objects
@@ -209,6 +211,25 @@ class RenderClient:
         Raises:
             RenderAPIError: On API errors
         """
+        # Check cache first
+        cache = SimpleCache(ttl=300)  # 5 minute cache
+        cache_key = f"services_list_{limit}"
+
+        if use_cache:
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                # Reconstruct Service objects from cached data
+                return [
+                    Service(
+                        id=s["id"],
+                        name=s["name"],
+                        type=s["type"],
+                        status=ServiceStatus(s["status"]),
+                        url=s.get("url"),
+                    )
+                    for s in cached_data
+                ]
+
         try:
             data = await self._request("GET", "/services", params={"limit": limit})
 
@@ -242,6 +263,20 @@ class RenderClient:
                     url=service_data.get("serviceDetails", {}).get("url"),
                 )
                 services.append(service)
+
+            # Cache the results
+            if use_cache and services:
+                cache_data = [
+                    {
+                        "id": s.id,
+                        "name": s.name,
+                        "type": s.type,
+                        "status": s.status.value,
+                        "url": s.url,
+                    }
+                    for s in services
+                ]
+                cache.set(cache_key, cache_data)
 
             return services
         except RenderAPIError as e:
