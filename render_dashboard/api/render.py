@@ -125,7 +125,9 @@ class RenderClient:
             RenderAPIError: On API errors
         """
         try:
+            print(f"DEBUG: Fetching custom domains from /services/{service_id}/custom-domains")
             data = await self._request("GET", f"/services/{service_id}/custom-domains")
+            print(f"DEBUG: Custom domains response: {data}")
 
             domains = []
             if isinstance(data, list):
@@ -141,9 +143,13 @@ class RenderClient:
                         if domain_name:
                             domains.append(domain_name)
 
+            print(f"DEBUG: Parsed domains: {domains}")
             return domains
-        except RenderAPIError:
-            # Custom domains endpoint might not exist or return 404
+        except RenderAPIError as e:
+            print(f"DEBUG: RenderAPIError fetching custom domains: {e}")
+            return []
+        except Exception as e:
+            print(f"DEBUG: Exception fetching custom domains: {type(e).__name__}: {e}")
             return []
 
     async def get_service(self, service_id: str) -> Service:
