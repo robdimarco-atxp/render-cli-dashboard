@@ -379,6 +379,9 @@ class RenderClient:
             print(f"DEBUG list_services: Response keys: {data.keys() if isinstance(data, dict) else 'N/A'}")
             if isinstance(data, list):
                 print(f"DEBUG list_services: Response is list with {len(data)} items")
+                if len(data) > 0:
+                    print(f"DEBUG list_services: First item keys: {data[0].keys() if isinstance(data[0], dict) else 'N/A'}")
+                    print(f"DEBUG list_services: First item: {json.dumps(data[0], indent=2, default=str)[:500]}")
             elif isinstance(data, dict) and "services" in data:
                 print(f"DEBUG list_services: Response has 'services' key with {len(data.get('services', []))} items")
 
@@ -395,16 +398,19 @@ class RenderClient:
 
             services = []
 
-            for service_data in services_data:
+            for idx, service_data in enumerate(services_data):
                 # Skip if not a dict
                 if not isinstance(service_data, dict):
+                    print(f"DEBUG list_services: Item {idx} is not a dict, skipping")
                     continue
 
                 # Get required fields with fallbacks
                 service_id = service_data.get("id") or service_data.get("serviceId")
                 if not service_id:
-                    # Skip services without IDs
+                    print(f"DEBUG list_services: Item {idx} has no ID, skipping")
                     continue
+
+                print(f"DEBUG list_services: Processing service {idx}: id={service_id}, name={service_data.get('name')}")
 
                 # Get custom domain if available
                 custom_domain = None
