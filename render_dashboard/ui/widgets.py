@@ -106,33 +106,19 @@ class ServiceCard(Container):
 
     def _format_details(self) -> str:
         """Format deploy details line."""
+        from ..utils import time_ago
+
         if not self.service.latest_deploy:
             return "└─ No deployments"
 
         deploy = self.service.latest_deploy
-
-        # Calculate time since deploy
-        now = datetime.now(timezone.utc)
-        if deploy.created_at.tzinfo is None:
-            created_at = deploy.created_at.replace(tzinfo=timezone.utc)
-        else:
-            created_at = deploy.created_at
-
-        delta = now - created_at
-        if delta.days > 0:
-            time_ago = f"{delta.days}d ago"
-        elif delta.seconds >= 3600:
-            time_ago = f"{delta.seconds // 3600}h ago"
-        elif delta.seconds >= 60:
-            time_ago = f"{delta.seconds // 60}m ago"
-        else:
-            time_ago = f"{delta.seconds}s ago"
+        ago = time_ago(deploy.created_at)
 
         # Build details string with commit hash if available
         if deploy.is_in_progress:
-            details = f"└─ Deploy started: {time_ago}"
+            details = f"└─ Deploy started: {ago}"
         else:
-            details = f"└─ Last deploy: {time_ago} ({deploy.status.value})"
+            details = f"└─ Last deploy: {ago} ({deploy.status.value})"
 
         # Add commit hash on a second line if available
         if deploy.commit_sha:
