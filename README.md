@@ -23,10 +23,18 @@ A dual-mode terminal tool for managing Render services with both a visual TUI da
 
 ```bash
 cd /path/to/render-dashboard
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install package in development mode
 pip install -e .
 ```
 
-This creates the `rd` command in your PATH.
+This creates the `rd` command in your PATH (within the virtual environment).
 
 ### 2. Get Your Render API Key
 
@@ -282,6 +290,8 @@ services:
 
 1. **Keep TUI running in tmux**: Monitor all services at a glance
    ```bash
+   # In your render-dashboard directory
+   source .venv/bin/activate
    tmux new-session -s render
    rd
    # Ctrl+B, D to detach
@@ -289,11 +299,19 @@ services:
 
 2. **Use CLI for quick actions**: Fast access from any terminal
    ```bash
+   # Remember to activate venv first (or add to shell startup)
+   source /path/to/render-dashboard/.venv/bin/activate
    rd chat logs      # Opens in browser instantly
    rd auth status    # Quick status check
    ```
 
-3. **Set up shell aliases** for frequently accessed services:
+3. **Auto-activate venv**: Add to your shell startup for convenience
+   ```bash
+   # In ~/.zshrc or ~/.bashrc
+   source /path/to/render-dashboard/.venv/bin/activate
+   ```
+
+4. **Set up shell aliases** for frequently accessed services:
    ```bash
    # In ~/.zshrc or ~/.bashrc
    alias chat-logs='rd chat logs'

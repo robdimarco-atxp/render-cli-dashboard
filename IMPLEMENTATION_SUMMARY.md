@@ -212,16 +212,20 @@ Run `./verify-install.sh` to check:
 
 ## Installation Instructions
 
-### Quick Install (3 steps)
+### Quick Install (4 steps)
 
 ```bash
-# 1. Install package
+# 1. Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. Install package
 pip install -e .
 
-# 2. Set API key
+# 3. Set API key
 export RENDER_API_KEY="rnd_xxxxx"
 
-# 3. Configure services
+# 4. Configure services
 cp config.yaml.example config.yaml
 # Edit config.yaml with your service IDs
 ```
@@ -229,6 +233,9 @@ cp config.yaml.example config.yaml
 ### Optional: Zsh Integration
 
 ```bash
+# Make sure venv is activated first
+source .venv/bin/activate
+
 ./install-zsh-plugin.sh
 # Add 'render-dashboard' to plugins in ~/.zshrc
 source ~/.zshrc

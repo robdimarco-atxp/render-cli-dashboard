@@ -5,8 +5,24 @@ set -e
 echo "🔍 Verifying Render Dashboard Installation..."
 echo ""
 
+# Check if venv exists
+echo "1. Checking virtual environment..."
+if [[ -d ".venv" ]]; then
+    echo "   ✓ Virtual environment exists at .venv/"
+    if [[ "$VIRTUAL_ENV" == *".venv"* ]]; then
+        echo "   ✓ Virtual environment is activated"
+    else
+        echo "   ⚠ Virtual environment not activated"
+        echo "     Run: source .venv/bin/activate"
+    fi
+else
+    echo "   ✗ Virtual environment not found"
+    echo "     Run: python3 -m venv .venv && source .venv/bin/activate"
+    exit 1
+fi
+
 # Check Python version
-echo "1. Checking Python version..."
+echo "2. Checking Python version..."
 PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
 PYTHON_MAJOR=$(echo $PYTHON_VERSION | cut -d. -f1)
 PYTHON_MINOR=$(echo $PYTHON_VERSION | cut -d. -f2)
@@ -19,7 +35,7 @@ else
 fi
 
 # Check if package is installed
-echo "2. Checking if package is installed..."
+echo "3. Checking if package is installed..."
 if python3 -c "import render_dashboard" 2>/dev/null; then
     VERSION=$(python3 -c "import render_dashboard; print(render_dashboard.__version__)")
     echo "   ✓ render_dashboard v$VERSION is installed"
@@ -30,7 +46,7 @@ else
 fi
 
 # Check if rd command exists
-echo "3. Checking if 'rd' command exists..."
+echo "4. Checking if 'rd' command exists..."
 if command -v rd &> /dev/null; then
     echo "   ✓ 'rd' command is available in PATH"
 else
@@ -40,7 +56,7 @@ else
 fi
 
 # Check dependencies
-echo "4. Checking dependencies..."
+echo "5. Checking dependencies..."
 DEPS=("textual" "httpx" "yaml" "dateutil")
 ALL_DEPS_OK=true
 
@@ -59,7 +75,7 @@ if [[ $ALL_DEPS_OK == false ]]; then
 fi
 
 # Check for config file
-echo "5. Checking for config file..."
+echo "6. Checking for config file..."
 if [[ -f "config.yaml" ]]; then
     echo "   ✓ config.yaml found in current directory"
 elif [[ -f "$HOME/.config/render-dashboard/config.yaml" ]]; then
@@ -70,7 +86,7 @@ else
 fi
 
 # Check for API key
-echo "6. Checking for API key..."
+echo "7. Checking for API key..."
 if [[ -n "$RENDER_API_KEY" ]]; then
     echo "   ✓ RENDER_API_KEY is set"
 else
@@ -79,7 +95,7 @@ else
 fi
 
 # Check zsh plugin (optional)
-echo "7. Checking zsh plugin (optional)..."
+echo "8. Checking zsh plugin (optional)..."
 if [[ -f "$HOME/.oh-my-zsh/custom/plugins/render-dashboard/render-dashboard.plugin.zsh" ]]; then
     echo "   ✓ Zsh plugin is installed"
 
@@ -99,11 +115,12 @@ echo ""
 echo "✅ Installation verification complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Set RENDER_API_KEY: export RENDER_API_KEY=rnd_xxxxx"
-echo "  2. Create config.yaml: cp config.yaml.example config.yaml"
-echo "  3. Edit config.yaml with your service IDs"
-echo "  4. Run dashboard: rd"
-echo "  5. Try CLI: rd <service> logs"
+echo "  1. Activate venv: source .venv/bin/activate"
+echo "  2. Set RENDER_API_KEY: export RENDER_API_KEY=rnd_xxxxx"
+echo "  3. Create config.yaml: cp config.yaml.example config.yaml"
+echo "  4. Edit config.yaml with your service IDs"
+echo "  5. Run dashboard: rd"
+echo "  6. Try CLI: rd <service> logs"
 echo ""
 echo "Documentation:"
 echo "  • Quick start: cat QUICKSTART.md"

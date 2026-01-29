@@ -6,6 +6,12 @@ Get up and running with Render Dashboard in 5 minutes!
 
 ```bash
 cd render-dashboard
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install package
 pip install -e .
 ```
 
@@ -55,6 +61,11 @@ services:
 
 ## Step 4: Try It!
 
+**Make sure venv is activated:**
+```bash
+source .venv/bin/activate
+```
+
 **TUI Dashboard:**
 ```bash
 rd
@@ -87,9 +98,13 @@ rd unknown logs  # Shows list of configured services
 
 ## Tips
 
-1. **Keep it running**: Run `rd` in a tmux pane for monitoring
-2. **Use aliases**: Set up `alias api-logs='rd api logs'` in your shell
-3. **Quick access**: Type `rd ` and let zsh-autosuggestions do the rest
+1. **Auto-activate venv**: Add to `~/.zshrc` or `~/.bashrc`:
+   ```bash
+   source /path/to/render-dashboard/.venv/bin/activate
+   ```
+2. **Keep it running**: Run `rd` in a tmux pane for monitoring
+3. **Use aliases**: Set up `alias api-logs='rd api logs'` in your shell
+4. **Quick access**: Type `rd ` and let zsh-autosuggestions do the rest
 
 ## Need Help?
 
