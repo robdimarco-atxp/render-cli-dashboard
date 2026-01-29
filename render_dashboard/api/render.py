@@ -125,9 +125,7 @@ class RenderClient:
             RenderAPIError: On API errors
         """
         try:
-            print(f"DEBUG: Fetching custom domains from /services/{service_id}/custom-domains")
             data = await self._request("GET", f"/services/{service_id}/custom-domains")
-            print(f"DEBUG: Custom domains response: {data}")
 
             domains = []
             if isinstance(data, list):
@@ -150,13 +148,12 @@ class RenderClient:
                             if domain_name:
                                 domains.append(domain_name)
 
-            print(f"DEBUG: Parsed domains: {domains}")
             return domains
-        except RenderAPIError as e:
-            print(f"DEBUG: RenderAPIError fetching custom domains: {e}")
+        except RenderAPIError:
+            # If custom domains endpoint fails (permissions, etc), just return empty
             return []
-        except Exception as e:
-            print(f"DEBUG: Exception fetching custom domains: {type(e).__name__}: {e}")
+        except Exception:
+            # If parsing fails, return empty rather than crashing
             return []
 
     async def get_service(self, service_id: str) -> Service:
@@ -173,13 +170,6 @@ class RenderClient:
         """
         data = await self._request("GET", f"/services/{service_id}")
 
-        # DEBUG: Print the entire response to see structure
-        print("=" * 80)
-        print(f"DEBUG: Full service response for {service_id}:")
-        import json
-        print(json.dumps(data, indent=2, default=str))
-        print("=" * 80)
-
         service_data = data.get("service", data)  # Handle wrapped or unwrapped response
 
         # Determine status - if actively deploying, mark as deploying
@@ -188,12 +178,9 @@ class RenderClient:
 
         # Get custom domains from separate endpoint
         custom_domain = None
-        print(f"DEBUG: About to call get_custom_domains for {service_id}")
         custom_domains = await self.get_custom_domains(service_id)
-        print(f"DEBUG: get_custom_domains returned: {custom_domains}")
         if custom_domains:
             custom_domain = custom_domains[0]  # Use first custom domain
-            print(f"DEBUG: Using custom domain: {custom_domain}")
 
         service = Service(
             id=service_data["id"],

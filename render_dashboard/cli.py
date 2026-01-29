@@ -77,10 +77,6 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
             if service.url:
                 status_parts.append(f"Render URL: {service.url}")
 
-            # Debug: Show what we got from API
-            if not service.custom_domain:
-                status_parts.append("(No custom domain configured)")
-
             if service.latest_deploy:
                 deploy = service.latest_deploy
 
