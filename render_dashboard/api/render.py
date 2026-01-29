@@ -134,21 +134,27 @@ class RenderClient:
 
         # Get custom domain if available
         custom_domain = None
-        service_details = service_data.get("serviceDetails", {})
 
-        # Debug: Print service details structure
+        # Debug: Check both root and serviceDetails for customDomains
         import json
-        print(f"DEBUG: Service details keys: {list(service_details.keys())}")
-        if "customDomains" in service_details:
-            print(f"DEBUG: customDomains: {json.dumps(service_details['customDomains'], indent=2)}")
+        print(f"DEBUG: Root service_data keys: {list(service_data.keys())}")
 
-        if service_details.get("customDomains"):
-            custom_domains = service_details["customDomains"]
+        # Check in root level first
+        if "customDomains" in service_data:
+            print(f"DEBUG: customDomains in ROOT: {json.dumps(service_data['customDomains'], indent=2)}")
+            custom_domains = service_data["customDomains"]
             if isinstance(custom_domains, list) and len(custom_domains) > 0:
-                # Use the first custom domain
                 domain_obj = custom_domains[0]
                 custom_domain = domain_obj.get("name") or domain_obj.get("domain") or domain_obj.get("domainName")
-                print(f"DEBUG: Found custom domain: {custom_domain}")
+                print(f"DEBUG: Found custom domain in root: {custom_domain}")
+
+        # Also check in envSpecificDetails which might have environment-specific domains
+        service_details = service_data.get("serviceDetails", {})
+        env_specific = service_details.get("envSpecificDetails", {})
+        if env_specific:
+            print(f"DEBUG: envSpecificDetails keys: {list(env_specific.keys())}")
+            if "customDomains" in env_specific:
+                print(f"DEBUG: customDomains in envSpecificDetails: {json.dumps(env_specific['customDomains'], indent=2)}")
 
         service = Service(
             id=service_data["id"],
