@@ -237,11 +237,15 @@ class StatusBar(Static):
             else:
                 time_str = f"{seconds_ago // 60}m ago"
 
-            text = f"Updated: {time_str}"
+            # Show brief "refreshing..." indicator for 2 seconds after update
+            if seconds_ago < 2:
+                text = f"[bold green]✓ Refreshed[/] {time_str}"
+            else:
+                text = f"Updated: {time_str}"
         else:
             text = "Loading..."
 
-        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: enabled"
+        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: 30s"
         # Pad to full width
         self.update(f" {text}  |  {controls}")
 
