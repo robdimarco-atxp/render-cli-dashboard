@@ -1,12 +1,14 @@
 """Custom widgets for the TUI dashboard."""
 from typing import Optional
 from textual.app import ComposeResult
-from textual.containers import Container
-from textual.widgets import Static, Label
+from textual.containers import Container, VerticalScroll
+from textual.widgets import Static, Label, OptionList
+from textual.widgets.option_list import Option
 from textual.message import Message
+from textual.screen import ModalScreen
 from datetime import datetime, timezone
 
-from ..models import Service
+from ..models import Service, EnvVar
 
 
 class ServiceCard(Container):
@@ -98,7 +100,7 @@ class ServiceCard(Container):
 
         # Actions (highlight action keys without brackets to avoid markup issues)
         yield Static(
-            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]M[/]etrics | [bold cyan]S[/]ettings",
+            "[bold cyan]L[/]ogs | [bold cyan]E[/]vents | [bold cyan]M[/]etrics | En[bold cyan]v[/] | [bold cyan]S[/]ettings",
             classes="service-actions"
         )
 
@@ -214,6 +216,7 @@ class ServiceCard(Container):
             "l": "logs",
             "e": "events",
             "m": "metrics",
+            "v": "env_vars",
             "s": "settings",
         }
 
@@ -282,3 +285,168 @@ class StatusBar(Static):
     def on_mount(self) -> None:
         """Set up periodic refresh of time display."""
         self.set_interval(1.0, self._refresh_text)
+
+
+class EnvVarsScreen(ModalScreen):
+    """Modal screen to display environment variables."""
+
+    DEFAULT_CSS = """
+    EnvVarsScreen {
+        align: center middle;
+    }
+
+    #env-vars-container {
+        width: 90;
+        height: 35;
+        border: heavy $primary;
+        background: $surface;
+    }
+
+    #env-vars-header {
+        dock: top;
+        height: 3;
+        background: $panel;
+        content-align: center middle;
+        text-style: bold;
+    }
+
+    #env-vars-list {
+        height: 1fr;
+        margin: 0 1;
+        border: solid $primary-darken-1;
+    }
+
+    #env-var-detail {
+        height: 6;
+        background: $panel;
+        border: solid $primary-darken-1;
+        padding: 1;
+        margin: 0 1;
+    }
+
+    #env-vars-footer {
+        height: 1;
+        background: $panel;
+        content-align: center middle;
+        padding: 0 1;
+    }
+    """
+
+    BINDINGS = [
+        ("escape", "dismiss", "Close"),
+        ("q", "dismiss", "Close"),
+        ("c", "copy_value", "Copy Value"),
+        ("b", "open_browser", "Open in Browser"),
+    ]
+
+    def __init__(self, service_name: str, service_id: str, env_vars: list[EnvVar], error: Optional[str] = None, *args, **kwargs):
+        """Initialize the env vars screen.
+
+        Args:
+            service_name: Name of the service
+            service_id: Service ID for browser link
+            env_vars: List of environment variables
+            error: Optional error message to display
+        """
+        super().__init__(*args, **kwargs)
+        self.service_name = service_name
+        self.service_id = service_id
+        self.env_vars = env_vars
+        self.error = error
+
+    def compose(self) -> ComposeResult:
+        """Compose the modal layout."""
+        with Container(id="env-vars-container"):
+            yield Static(f"Environment Variables: {self.service_name} ({len(self.env_vars)} vars)", id="env-vars-header")
+
+            if self.error:
+                yield Static(f"[red]Error: {self.error}[/]", id="env-vars-list")
+            elif not self.env_vars:
+                yield Static("[yellow]No environment variables found[/]\n[dim]Press B to open in browser[/]", id="env-vars-list")
+            else:
+                # Create OptionList with env var names
+                option_list = OptionList(id="env-vars-list")
+                for env_var in self.env_vars:
+                    option_list.add_option(Option(env_var.key, id=env_var.key))
+                yield option_list
+
+            if self.env_vars:
+                yield Static("Select a variable and press [bold cyan]C[/] to copy", id="env-var-detail")
+
+            if not self.env_vars and not self.error:
+                yield Static("[bold]ESC[/] Close | [bold]B[/] Open in Browser", id="env-vars-footer")
+            else:
+                yield Static("[bold]ESC[/] Close | [bold]↑↓[/] Navigate | [bold]C[/] Copy | [bold]B[/] Browser", id="env-vars-footer")
+
+    def on_mount(self) -> None:
+        """When mounted, show first env var if available."""
+        if self.env_vars:
+            self._update_detail_panel()
+
+    def on_option_list_option_highlighted(self, event: OptionList.OptionHighlighted) -> None:
+        """Handle option selection to show value."""
+        self._update_detail_panel()
+
+    def _update_detail_panel(self) -> None:
+        """Update the detail panel with selected env var value."""
+        try:
+            option_list = self.query_one("#env-vars-list", OptionList)
+            detail = self.query_one("#env-var-detail", Static)
+
+            if option_list.highlighted is not None and self.env_vars:
+                # Find the env var by index
+                if option_list.highlighted < len(self.env_vars):
+                    env_var = self.env_vars[option_list.highlighted]
+                    # Show full value in detail panel
+                    detail.update(f"[bold cyan]{env_var.key}[/]\n{env_var.value}")
+                else:
+                    detail.update("Select a variable")
+            else:
+                detail.update("Select a variable")
+        except Exception:
+            pass
+
+    def action_copy_value(self) -> None:
+        """Copy selected env var value to clipboard."""
+        try:
+            option_list = self.query_one("#env-vars-list", OptionList)
+            detail = self.query_one("#env-var-detail", Static)
+
+            if option_list.highlighted is not None and option_list.highlighted < len(self.env_vars):
+                env_var = self.env_vars[option_list.highlighted]
+
+                # Try to copy to clipboard using pbcopy (macOS) or xclip (Linux)
+                import subprocess
+                import platform
+
+                try:
+                    if platform.system() == "Darwin":
+                        # macOS
+                        process = subprocess.Popen(['pbcopy'], stdin=subprocess.PIPE)
+                        process.communicate(env_var.value.encode('utf-8'))
+                        detail.update(f"[bold green]✓ Copied {env_var.key}[/]\n{env_var.value}")
+                    elif platform.system() == "Linux":
+                        # Linux
+                        process = subprocess.Popen(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE)
+                        process.communicate(env_var.value.encode('utf-8'))
+                        detail.update(f"[bold green]✓ Copied {env_var.key}[/]\n{env_var.value}")
+                    else:
+                        detail.update(f"[yellow]Copy not supported on {platform.system()}[/]\nValue: {env_var.value}")
+                except FileNotFoundError:
+                    detail.update(f"[yellow]Clipboard tool not found[/]\nValue: {env_var.value}")
+        except Exception as e:
+            self.log.error(f"Error copying: {e}")
+
+    def action_dismiss(self) -> None:
+        """Dismiss the modal."""
+        self.app.pop_screen()
+
+    def action_open_browser(self) -> None:
+        """Open environment variables page in browser."""
+        import webbrowser
+        url = f"https://dashboard.render.com/web/{self.service_id}/env"
+        try:
+            webbrowser.open(url)
+        except Exception:
+            pass
+        self.app.pop_screen()

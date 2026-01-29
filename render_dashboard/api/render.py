@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from dateutil import parser as dateparser
 
-from ..models import Service, Deploy, ServiceStatus, DeployStatus
+from ..models import Service, Deploy, ServiceStatus, DeployStatus, EnvVar
 from ..cache import SimpleCache
 
 
@@ -423,3 +423,70 @@ class RenderClient:
             raise e
         except Exception as e:
             raise RenderAPIError(f"Error parsing service list: {e}")
+
+    async def get_env_vars(self, service_id: str) -> list[EnvVar]:
+        """Get environment variables for a service.
+
+        Args:
+            service_id: Service ID
+
+        Returns:
+            List of environment variables (sorted alphabetically)
+
+        Raises:
+            RenderAPIError: On API errors
+        """
+        try:
+            env_vars = []
+            cursor = None
+            page = 1
+
+            # Paginate through all env vars
+            while True:
+                params = {}
+                if cursor:
+                    params["cursor"] = cursor
+
+                data = await self._request("GET", f"/services/{service_id}/env-vars", params=params)
+
+                if not isinstance(data, list):
+                    break
+
+                # Extract env vars from this page
+                page_vars = []
+                next_cursor = None
+
+                for item in data:
+                    if isinstance(item, dict):
+                        # Check if envVar is nested
+                        env_var_obj = item.get("envVar", item)
+                        key = env_var_obj.get("key") or env_var_obj.get("name")
+                        value = env_var_obj.get("value", "")
+                        if key:
+                            page_vars.append(EnvVar(key=key, value=value))
+
+                        # Get cursor for next page
+                        if "cursor" in item:
+                            next_cursor = item["cursor"]
+
+                env_vars.extend(page_vars)
+
+                # If no more pages, break
+                if not next_cursor or len(page_vars) == 0:
+                    break
+
+                cursor = next_cursor
+                page += 1
+
+                # Safety limit to prevent infinite loops
+                if page > 100:
+                    break
+
+            # Sort alphabetically by key
+            env_vars.sort(key=lambda x: x.key.lower())
+
+            return env_vars
+        except RenderAPIError as e:
+            raise e
+        except Exception as e:
+            raise RenderAPIError(f"Error fetching environment variables: {e}")

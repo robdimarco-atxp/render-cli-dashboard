@@ -11,7 +11,7 @@ from textual.binding import Binding
 from ..config import AppConfig, load_config, ConfigError
 from ..api import RenderClient, RenderAPIError
 from ..models import Service
-from .widgets import ServiceCard, StatusBar
+from .widgets import ServiceCard, StatusBar, EnvVarsScreen
 
 
 class DashboardApp(App):
@@ -70,6 +70,7 @@ class DashboardApp(App):
         ("l", "action_logs", "Logs"),
         ("e", "action_events", "Events"),
         ("m", "action_metrics", "Metrics"),
+        ("v", "action_env_vars", "Env Vars"),
         ("s", "action_settings", "Settings"),
     ]
 
@@ -273,7 +274,41 @@ class DashboardApp(App):
         self, message: ServiceCard.ServiceSelected
     ) -> None:
         """Handle service action selection from ServiceCard."""
-        self._open_service_url(message.service_id, message.action)
+        if message.action == "env_vars":
+            # Handle env vars specially - show modal instead of opening URL
+            await self._show_env_vars(message.service_id)
+        else:
+            self._open_service_url(message.service_id, message.action)
+
+    async def _show_env_vars(self, service_id: str) -> None:
+        """Show environment variables modal for a service."""
+        if not self.config:
+            return
+
+        # Find service name
+        service_card = self.service_cards.get(service_id)
+        if not service_card:
+            return
+
+        service_name = service_card.service.name
+        env_vars = []
+        error_msg = None
+
+        try:
+            # Fetch env vars from API
+            async with RenderClient(self.config.render.api_key) as client:
+                env_vars = await client.get_env_vars(service_id)
+                self.log.info(f"Fetched {len(env_vars)} env vars for {service_name}")
+
+        except RenderAPIError as e:
+            error_msg = str(e)
+            self.log.error(f"Failed to fetch env vars: {e}")
+        except Exception as e:
+            error_msg = str(e)
+            self.log.error(f"Error showing env vars: {e}")
+
+        # Show modal screen even if there was an error
+        await self.push_screen(EnvVarsScreen(service_name, service_id, env_vars, error=error_msg))
 
     def action_action_logs(self) -> None:
         """Open logs for focused service."""
@@ -298,6 +333,12 @@ class DashboardApp(App):
         service_id = self._get_focused_service_id()
         if service_id:
             self._open_service_url(service_id, "settings")
+
+    async def action_action_env_vars(self) -> None:
+        """Show environment variables for focused service."""
+        service_id = self._get_focused_service_id()
+        if service_id:
+            await self._show_env_vars(service_id)
 
     async def action_search(self) -> None:
         """Show and focus the search input."""

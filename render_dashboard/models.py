@@ -83,6 +83,13 @@ class Service:
 
 
 @dataclass
+class EnvVar:
+    """Represents an environment variable."""
+    key: str
+    value: str
+
+
+@dataclass
 class ServiceConfig:
     """Configuration for a service from config.yaml."""
     id: str
