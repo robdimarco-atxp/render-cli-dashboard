@@ -95,9 +95,9 @@ class ServiceCard(Container):
         if details:
             yield Static(details, classes="service-details")
 
-        # Actions
+        # Actions (escape brackets with double brackets for Rich markup)
         yield Static(
-            "[L]ogs | [E]vents | [D]eploys | [S]ettings",
+            "[[L]]ogs | [[E]]vents | [[D]]eploys | [[S]]ettings",
             classes="service-actions"
         )
 
@@ -197,7 +197,7 @@ class StatusBar(Static):
         else:
             text = "Loading..."
 
-        controls = "[R] Refresh | [Q] Quit | Auto-refresh: enabled"
+        controls = "[[R]] Refresh | [[Q]] Quit | Auto-refresh: enabled"
         # Pad to full width
         self.update(f" {text}  |  {controls}")
 
