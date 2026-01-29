@@ -18,10 +18,12 @@ class ServiceCard(Container):
         border: solid $primary;
         margin: 1;
         padding: 1;
+        background: $surface;
     }
 
     ServiceCard.focused {
-        border: solid $accent;
+        border: heavy $accent;
+        background: $boost;
     }
 
     ServiceCard > .service-header {
@@ -39,6 +41,11 @@ class ServiceCard(Container):
         width: 100%;
         height: 1;
         color: $accent;
+    }
+
+    ServiceCard.focused > .service-actions {
+        color: $success;
+        text-style: bold;
     }
 
     .status-running {
