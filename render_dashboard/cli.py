@@ -71,11 +71,15 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
             status_parts.append(f"Status: {service.status.value}")
             status_parts.append(f"Type: {service.type}")
 
-            # Prefer custom domain over onrender.com
+            # Show both custom domain and render URL
             if service.custom_domain:
-                status_parts.append(f"URL: https://{service.custom_domain}")
-            elif service.url:
-                status_parts.append(f"URL: {service.url}")
+                status_parts.append(f"Custom Domain: https://{service.custom_domain}")
+            if service.url:
+                status_parts.append(f"Render URL: {service.url}")
+
+            # Debug: Show what we got from API
+            if not service.custom_domain:
+                status_parts.append("(No custom domain configured)")
 
             if service.latest_deploy:
                 deploy = service.latest_deploy
@@ -90,7 +94,9 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
                 else:
                     deploy_icon = "⚪"
 
-                status_parts.append(f"Latest deploy: {deploy_icon} {deploy.status.value}")
+                # Make deploy status clearer
+                deploy_status_text = deploy.status.value.replace("_", " ").title()
+                status_parts.append(f"Deployment: {deploy_icon} {deploy_status_text}")
 
                 # Calculate time since deploy
                 from datetime import datetime, timezone

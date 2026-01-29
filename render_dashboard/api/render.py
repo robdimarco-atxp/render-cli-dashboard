@@ -135,11 +135,20 @@ class RenderClient:
         # Get custom domain if available
         custom_domain = None
         service_details = service_data.get("serviceDetails", {})
+
+        # Debug: Print service details structure
+        import json
+        print(f"DEBUG: Service details keys: {list(service_details.keys())}")
+        if "customDomains" in service_details:
+            print(f"DEBUG: customDomains: {json.dumps(service_details['customDomains'], indent=2)}")
+
         if service_details.get("customDomains"):
             custom_domains = service_details["customDomains"]
             if isinstance(custom_domains, list) and len(custom_domains) > 0:
                 # Use the first custom domain
-                custom_domain = custom_domains[0].get("name") or custom_domains[0].get("domain")
+                domain_obj = custom_domains[0]
+                custom_domain = domain_obj.get("name") or domain_obj.get("domain") or domain_obj.get("domainName")
+                print(f"DEBUG: Found custom domain: {custom_domain}")
 
         service = Service(
             id=service_data["id"],
