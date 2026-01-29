@@ -172,9 +172,12 @@ class RenderClient:
 
         service_data = data.get("service", data)  # Handle wrapped or unwrapped response
 
-        # Determine status - if actively deploying, mark as deploying
-        status_str = service_data.get("status", "unknown")
-        status = self._parse_service_status(status_str)
+        # Determine status from suspended field (Render API doesn't have direct status field)
+        suspended = service_data.get("suspended", "not_suspended")
+        if suspended == "suspended":
+            status = ServiceStatus.SUSPENDED
+        else:
+            status = ServiceStatus.AVAILABLE
 
         # Get custom domains from separate endpoint
         custom_domain = None
@@ -295,12 +298,19 @@ class RenderClient:
 
         # Extract repo URL for commit links
         repo_url = service_data.get("repo")
+        print(f"DEBUG get_service_with_deploy: service_data.get('repo') = {repo_url}")
         if repo_url and repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
+        print(f"DEBUG get_service_with_deploy: cleaned repo_url = {repo_url}")
 
         # Build service object (inline to avoid duplicate API call)
-        status_str = service_data.get("status", "unknown")
-        status = self._parse_service_status(status_str)
+        # Render API doesn't provide a direct "status" field, derive from suspended field
+        suspended = service_data.get("suspended", "not_suspended")
+        if suspended == "suspended":
+            status = ServiceStatus.SUSPENDED
+        else:
+            # Default to available if not suspended (will be overridden if deploy is in progress)
+            status = ServiceStatus.AVAILABLE
 
         # Get custom domains
         custom_domain = None
@@ -318,7 +328,9 @@ class RenderClient:
         )
 
         # Override status if deployment is in progress, passing repo URL for commit links
+        print(f"DEBUG get_service_with_deploy: About to call get_latest_deploy with repo_url={repo_url}")
         latest_deploy = await self.get_latest_deploy(service_id, repo_url=repo_url)
+        print(f"DEBUG get_service_with_deploy: get_latest_deploy returned, latest_deploy.repo_url={latest_deploy.repo_url if latest_deploy else None}")
         if latest_deploy and latest_deploy.is_in_progress:
             service.status = ServiceStatus.DEPLOYING
 
@@ -391,11 +403,18 @@ class RenderClient:
                     if isinstance(custom_domains, list) and len(custom_domains) > 0:
                         custom_domain = custom_domains[0].get("name") or custom_domains[0].get("domain")
 
+                # Determine status from suspended field
+                suspended = service_data.get("suspended", "not_suspended")
+                if suspended == "suspended":
+                    status = ServiceStatus.SUSPENDED
+                else:
+                    status = ServiceStatus.AVAILABLE
+
                 service = Service(
                     id=service_id,
                     name=service_data.get("name", service_id),
                     type=service_data.get("type", "unknown"),
-                    status=self._parse_service_status(service_data.get("status", "unknown")),
+                    status=status,
                     url=service_data.get("serviceDetails", {}).get("url"),
                     custom_domain=custom_domain,
                 )
