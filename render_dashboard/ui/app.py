@@ -5,7 +5,7 @@ from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
-from textual.widgets import Header, Footer, Static, Input
+from textual.widgets import Header, Static, Input
 from textual.binding import Binding
 
 from ..config import AppConfig, load_config, ConfigError
@@ -97,7 +97,6 @@ class DashboardApp(App):
         yield search_input
         yield VerticalScroll(id="services-container")
         yield StatusBar()
-        yield Footer()
 
     async def on_mount(self) -> None:
         """Initialize the dashboard when mounted."""

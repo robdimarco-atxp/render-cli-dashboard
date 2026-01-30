@@ -251,20 +251,27 @@ class StatusBar(Static):
             delta = now - self.last_update
             seconds_ago = int(delta.total_seconds())
 
+            # Round to nearest 5 second increment
+            seconds_ago = (seconds_ago // 5) * 5
+
             if seconds_ago < 60:
                 time_str = f"{seconds_ago}s ago"
             else:
                 time_str = f"{seconds_ago // 60}m ago"
 
-            # Show brief "refreshing..." indicator for 2 seconds after update
-            if seconds_ago < 2:
+            # Show brief "refreshing..." indicator for first 5 seconds after update
+            if seconds_ago < 5:
                 text = f"[bold green]✓ Refreshed[/] {time_str}"
             else:
                 text = f"Updated: {time_str}"
         else:
             text = "Loading..."
 
-        controls = "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | Auto-refresh: 30s"
+        controls = (
+            "[bold cyan]R[/] Refresh | [bold cyan]Q[/] Quit | [bold cyan]/[/] Search | "
+            "[bold cyan]L[/] Logs | [bold cyan]E[/] Events | [bold cyan]M[/] Metrics | "
+            "[bold cyan]V[/] Env | [bold cyan]S[/] Settings"
+        )
         # Pad to full width
         self.update(f" {text}  |  {controls}")
 
