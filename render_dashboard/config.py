@@ -41,12 +41,48 @@ def _substitute_env_vars(value: str) -> str:
     return value
 
 
+def find_config_path() -> Optional[Path]:
+    """Find config file path using priority order.
+
+    Priority:
+        1. Environment variable RENDER_DASHBOARD_CONFIG
+        2. Current directory config.yaml
+        3. ~/.config/render-dashboard/config.yaml
+
+    Returns:
+        Path to config file if found, None otherwise
+    """
+    # 1. Check environment variable
+    env_config = os.getenv("RENDER_DASHBOARD_CONFIG")
+    if env_config:
+        path = Path(env_config)
+        if path.exists():
+            return path
+        # If env var is set but file doesn't exist, still return it
+        # so we can give a clear error message
+        return path
+
+    # 2. Check current directory
+    config_path = Path("config.yaml")
+    if config_path.exists():
+        return config_path
+
+    # 3. Check home directory
+    config_path = Path.home() / ".config" / "render-dashboard" / "config.yaml"
+    if config_path.exists():
+        return config_path
+
+    return None
+
+
 def load_config(config_path: Optional[Path] = None, allow_empty_services: bool = False) -> AppConfig:
     """Load and validate configuration from YAML file.
 
     Args:
-        config_path: Path to config.yaml. If None, looks in current directory
-                    and then in ~/.config/render-dashboard/
+        config_path: Path to config.yaml. If None, uses find_config_path() to search:
+                    1. RENDER_DASHBOARD_CONFIG environment variable
+                    2. Current directory
+                    3. ~/.config/render-dashboard/
         allow_empty_services: If True, allows empty services list (for initial setup)
 
     Returns:
@@ -56,16 +92,14 @@ def load_config(config_path: Optional[Path] = None, allow_empty_services: bool =
         ConfigError: If config is invalid or missing
     """
     if config_path is None:
-        # Look in current directory first
-        config_path = Path("config.yaml")
-        if not config_path.exists():
-            # Try home directory
-            config_path = Path.home() / ".config" / "render-dashboard" / "config.yaml"
+        config_path = find_config_path()
 
-        if not config_path.exists():
+        if config_path is None:
             raise ConfigError(
-                "No config.yaml found. Please create one in the current directory "
-                "or in ~/.config/render-dashboard/.\n"
+                "No config.yaml found. Searched:\n"
+                "  1. RENDER_DASHBOARD_CONFIG environment variable\n"
+                "  2. ./config.yaml (current directory)\n"
+                "  3. ~/.config/render-dashboard/config.yaml\n\n"
                 "You can create a basic config with: rdash service add <service-name>"
             )
 
@@ -180,14 +214,9 @@ def get_config_path() -> Path:
     Returns:
         Path to config file, or default location if not found
     """
-    # Check current directory first
-    config_path = Path("config.yaml")
-    if config_path.exists():
-        return config_path
-
-    # Check home directory
-    config_path = Path.home() / ".config" / "render-dashboard" / "config.yaml"
-    if config_path.exists():
+    # Use the new find_config_path which checks env var too
+    config_path = find_config_path()
+    if config_path:
         return config_path
 
     # Default to current directory for new configs

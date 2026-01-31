@@ -1,6 +1,7 @@
 """Main Textual TUI application."""
 import asyncio
 import webbrowser
+from pathlib import Path
 from typing import Optional
 
 from textual.app import App, ComposeResult
@@ -76,7 +77,7 @@ class DashboardApp(App):
 
     TITLE = "Render Services Dashboard"
 
-    def __init__(self, config_path: Optional[str] = None, *args, **kwargs):
+    def __init__(self, config_path: Optional[Path] = None, *args, **kwargs):
         """Initialize the dashboard app.
 
         Args:
@@ -414,7 +415,7 @@ class DashboardApp(App):
 
 
 
-def run_dashboard(config_path: Optional[str] = None) -> int:
+def run_dashboard(config_path: Optional[Path] = None) -> int:
     """Run the dashboard TUI application.
 
     Args:

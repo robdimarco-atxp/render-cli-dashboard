@@ -2,6 +2,7 @@
 import sys
 import asyncio
 import webbrowser
+from pathlib import Path
 from typing import Optional
 
 from .config import load_config, find_service_by_alias, ConfigError
@@ -110,17 +111,18 @@ async def get_service_status(service_config: ServiceConfig, api_key: str) -> str
         return f"Error fetching status: {e}"
 
 
-def handle_cli_command(args: list[str]) -> int:
+def handle_cli_command(args: list[str], config_path: Optional[Path] = None) -> int:
     """Handle CLI command mode.
 
     Args:
         args: Command line arguments (service alias and action)
+        config_path: Optional path to config file
 
     Returns:
         Exit code (0 for success, 1 for error)
     """
     if len(args) < 2:
-        print("Usage: rdash <service> <action> [--no-browser]")
+        print("Usage: rdash [--config <path>] <service> <action> [--no-browser]")
         print("")
         print("Actions:")
         print("  logs      - Open service logs in browser")
@@ -130,13 +132,15 @@ def handle_cli_command(args: list[str]) -> int:
         print("  status    - Show current service status")
         print("")
         print("Options:")
-        print("  --no-browser  Print URL without opening browser")
+        print("  --config <path>  Path to config file")
+        print("  --no-browser     Print URL without opening browser")
         print("")
         print("Examples:")
         print("  rdash chat logs")
         print("  rdash auth events")
         print("  rdash accounts status")
         print("  rdash chat logs --no-browser")
+        print("  rdash --config ~/my-config.yaml chat logs")
         return 1
 
     # Parse --no-browser flag
@@ -155,7 +159,7 @@ def handle_cli_command(args: list[str]) -> int:
 
     # Load config
     try:
-        config = load_config()
+        config = load_config(config_path=config_path)
     except ConfigError as e:
         print(f"Configuration error: {e}")
         return 1

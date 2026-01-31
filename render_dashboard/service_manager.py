@@ -1,6 +1,7 @@
 """Service discovery and config management commands."""
 import asyncio
 import sys
+from pathlib import Path
 from typing import Optional
 
 from .config import (
@@ -14,12 +15,13 @@ from .api import RenderClient, RenderAPIError
 from .models import Service
 
 
-async def search_and_add_service(search_term: str, api_key: str) -> int:
+async def search_and_add_service(search_term: str, api_key: str, config_path: Optional[Path] = None) -> int:
     """Search for services by name and add to config.
 
     Args:
         search_term: Name, partial name, or service ID to search for
         api_key: Render API key
+        config_path: Optional path to config file
 
     Returns:
         Exit code (0 for success, 1 for error)
@@ -134,10 +136,11 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
             service_id=service.id,
             service_name=service.name,
             aliases=aliases,
-            priority=1
+            priority=1,
+            config_path=config_path
         )
-        config_path = get_config_path()
-        print(f"✓ Service added to {config_path}")
+        used_config_path = config_path if config_path else get_config_path()
+        print(f"✓ Service added to {used_config_path}")
         print()
         print("You can now use:")
         for alias in aliases:
@@ -150,14 +153,17 @@ async def search_and_add_service(search_term: str, api_key: str) -> int:
         return 1
 
 
-async def list_configured_services() -> int:
+async def list_configured_services(config_path: Optional[Path] = None) -> int:
     """List services currently in config.
+
+    Args:
+        config_path: Optional path to config file
 
     Returns:
         Exit code (0 for success, 1 for error)
     """
     try:
-        config = load_config()
+        config = load_config(config_path=config_path)
         print(f"Configured services ({len(config.services)}):")
         print()
 
@@ -175,17 +181,18 @@ async def list_configured_services() -> int:
         return 1
 
 
-async def remove_service_interactive(alias_or_id: str) -> int:
+async def remove_service_interactive(alias_or_id: str, config_path: Optional[Path] = None) -> int:
     """Remove a service from config.
 
     Args:
         alias_or_id: Service alias or ID to remove
+        config_path: Optional path to config file
 
     Returns:
         Exit code (0 for success, 1 for error)
     """
     try:
-        config = load_config()
+        config = load_config(config_path=config_path)
 
         # Find service by alias or ID
         service = None
@@ -206,7 +213,7 @@ async def remove_service_interactive(alias_or_id: str) -> int:
             print("Cancelled")
             return 0
 
-        remove_service_from_config(service.id)
+        remove_service_from_config(service.id, config_path=config_path)
         print(f"✓ Removed {service.name} from config")
         return 0
 
@@ -215,11 +222,12 @@ async def remove_service_interactive(alias_or_id: str) -> int:
         return 1
 
 
-def handle_service_management(args: list[str]) -> int:
+def handle_service_management(args: list[str], config_path: Optional[Path] = None) -> int:
     """Handle service management commands.
 
     Args:
         args: Command arguments after 'rdash service'
+        config_path: Optional path to config file
 
     Returns:
         Exit code
@@ -253,7 +261,7 @@ def handle_service_management(args: list[str]) -> int:
 
         # Get API key
         try:
-            config = load_config(allow_empty_services=True)
+            config = load_config(config_path=config_path, allow_empty_services=True)
             api_key = config.render.api_key
         except ConfigError as e:
             # If no config exists, try to get API key from environment
@@ -266,10 +274,10 @@ def handle_service_management(args: list[str]) -> int:
                 print("  export RENDER_API_KEY=rnd_xxxxx")
                 return 1
 
-        return asyncio.run(search_and_add_service(search_term, api_key))
+        return asyncio.run(search_and_add_service(search_term, api_key, config_path))
 
     elif command == "list":
-        return asyncio.run(list_configured_services())
+        return asyncio.run(list_configured_services(config_path))
 
     elif command == "remove":
         if len(args) < 2:
@@ -279,7 +287,7 @@ def handle_service_management(args: list[str]) -> int:
             return 1
 
         alias_or_id = args[1]
-        return asyncio.run(remove_service_interactive(alias_or_id))
+        return asyncio.run(remove_service_interactive(alias_or_id, config_path))
 
     else:
         print(f"Unknown command: {command}")
