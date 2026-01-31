@@ -40,7 +40,30 @@ pip install -e .
 
 This creates the `rdash` command in your PATH (within the virtual environment).
 
-**Note:** The command is `rdash` (not `rd`) to avoid conflicts with common shell aliases like `rd` → `rmdir`. No manual PATH setup is needed - the command is automatically available when the venv is activated. See [PATH_SETUP.md](PATH_SETUP.md) for details on making it permanently available.
+**Note:** The command is `rdash` (not `rd`) to avoid conflicts with common shell aliases like `rd` → `rmdir`. No manual PATH setup is needed - the command is automatically available when the venv is activated.
+
+### Optional: Shell Alias for Global Access
+
+To use `rdash` from anywhere without manually activating the virtual environment, add this function to your `~/.zshrc` (or `~/.bashrc` for Bash):
+
+```bash
+# Render Dashboard alias
+rdash() {
+    (
+        source "$HOME/path/to/render-dashboard/.venv/bin/activate"
+        command rdash "$@"
+    )
+}
+```
+
+**Replace** `$HOME/path/to/render-dashboard` with your actual installation path.
+
+Then reload your shell:
+```bash
+source ~/.zshrc
+```
+
+Now you can run `rdash` from any directory! See [CONFIG_LOADING.md](CONFIG_LOADING.md) for details on how config file discovery works from different directories.
 
 ### 2. Get Your Render API Key
 
@@ -331,9 +354,26 @@ services:
     priority: 1            # Optional: Display order (lower = higher)
 ```
 
-**Configuration file locations** (checked in order):
-1. `./config.yaml` (current directory)
-2. `~/.config/render-dashboard/config.yaml`
+**Configuration file locations** (checked in priority order):
+1. `--config <path>` flag (explicit override)
+2. `RENDER_DASHBOARD_CONFIG` environment variable
+3. `./config.yaml` (current directory)
+4. `~/.config/render-dashboard/config.yaml` (user default)
+
+**Examples:**
+```bash
+# Use specific config file
+rdash --config ~/my-config.yaml chat logs
+
+# Use environment variable (good for the shell alias)
+export RENDER_DASHBOARD_CONFIG="$HOME/.config/render-dashboard/config.yaml"
+rdash chat logs  # Works from any directory
+
+# Use default search (current dir, then ~/.config/render-dashboard/)
+rdash chat logs
+```
+
+See [CONFIG_LOADING.md](CONFIG_LOADING.md) for comprehensive configuration examples and setup patterns.
 
 ## Recommended Workflow
 
@@ -354,9 +394,20 @@ services:
    rdash auth status    # Quick status check
    ```
 
-3. **Auto-activate venv**: Add to your shell startup for convenience
+3. **Global access**: Use the shell alias (recommended) or set up config environment variable
    ```bash
-   # In ~/.zshrc or ~/.bashrc
+   # Option A: Shell function alias (see Installation section above)
+   rdash() {
+       (
+           source "$HOME/path/to/render-dashboard/.venv/bin/activate"
+           command rdash "$@"
+       )
+   }
+
+   # Option B: Set config location to use from any directory
+   export RENDER_DASHBOARD_CONFIG="$HOME/.config/render-dashboard/config.yaml"
+
+   # Then activate venv when needed
    source /path/to/render-dashboard/.venv/bin/activate
    ```
 
